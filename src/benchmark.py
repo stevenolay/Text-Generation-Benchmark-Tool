@@ -9,7 +9,11 @@ from summarizer_library import fetchSummarizers
 from mappings import (
     SUPPORTED_EVAL_SYSTEMS,
     SUPPORTED_TOKENIZERS,
-    SUPPORTED_SUMMARIZERS
+    SUPPORTED_SUMMARIZERS,
+    DEFAULT_TOKENIZER,
+    DEFAULT_TEXT_SEPERATOR,
+    DEFAULT_SENTENCE_SEPERATOR,
+    DEFAULT_SENTENCE_COUNT
 )
 
 
@@ -19,9 +23,13 @@ class benchmark:
         self.settings = self.initSettings()
 
         # Load Seperators
-        self.textSeperator = self.fetchSeperator('text_seperator')
-        self.sentenceSeperator = self.fetchSeperator('sentence_seperator')
+        textSeperator = self.fetchSeperator('text_seperator')
+        self.textSeperator = textSeperator if textSeperator \
+            else DEFAULT_TEXT_SEPERATOR
 
+        sentenceSeperator = self.fetchSeperator('sentence_seperator')
+        self.sentenceSeperator = sentenceSeperator if sentenceSeperator \
+            else DEFAULT_SENTENCE_SEPERATOR
         # Load Summarizers
         summarizers = self.fetchSettingByKey(
             'summarizers',
@@ -34,7 +42,7 @@ class benchmark:
         # Load Tokenizer
         tokenizer = self.fetchSettingByKey('tokenizer')
         self.validateOption(tokenizer, SUPPORTED_TOKENIZERS)
-        self.tokenizer = tokenizer
+        self.tokenizer = tokenizer if tokenizer else DEFAULT_TOKENIZER
 
         # Load Evaluation Systems
         evaluationSystems = self.fetchSettingByKey(
@@ -46,7 +54,8 @@ class benchmark:
 
         # Load States
         preTokenized = self.fetchSettingByKey('pre_tokenized')
-        self.preTokenized = self.evaluateBoolean(preTokenized)
+        preTokenized = self.evaluateBoolean(preTokenized)
+        self.preTokenized = preTokenized if preTokenized else False
 
         self.data_folders = self.fetchSettingByKey(
             'data_folders',
@@ -61,15 +70,20 @@ class benchmark:
 
         self.summarizerSwitch = Switcher(self)
 
-        self.sentenceCount = int(self.fetchSettingByKey('sentence_count'))
+        sentenceCount = self.fetchSettingByKey('sentence_count')
+        self.sentenceCount = int(sentenceCount) if sentenceCount \
+            else DEFAULT_SENTENCE_COUNT
 
         self.dataFrames = self.cacheDataFramesForSamples()
 
     def cacheDataFramesForSamples(self):
+        textSeperator = self.textSeperator
         sampleFilePaths = self.sample_filepaths
         dataFrames = {}
         for filePath in sampleFilePaths:
-            dataFrames[filePath] = pd.read_csv(filePath, sep='\n', header=None)
+            dataFrames[filePath] = pd.read_csv(
+                filePath, sep=textSeperator, header=None
+            )
 
         return dataFrames
 
@@ -140,14 +154,12 @@ class benchmark:
             return targetedSetting
 
     def fetchSeperator(self, key):
-        '''
-        Approach adapted from Stack Overflow User:
-           Jerub
-        Source:
-           https://stackoverflow.com/questions/4020539/process-escape-sequences-in-a-string-in-python
-        '''
         settings = self.settings
-        seperator = settings.get('general', key)
+        try:
+            seperator = settings.get('general', key)
+        except configparser.NoOptionError:
+            return None
+
         decodedSeperator = bytes(seperator, "utf-8").decode("unicode_escape")
 
         return decodedSeperator
@@ -181,18 +193,57 @@ class benchmark:
 
         dataFrames = self.dataFrames
         texts_df = dataFrames[sampleFilepath]
-        with open(generatedSummariesFilePath, 'w') as summaries:
-            for row in texts_df.itertuples(index=True):
-                index = row[0]
-                text = row[1]
-                generatedSummary = summarizerSwitch.toggleAndExecuteSummarizer(
-                    summarizerKey, text
-                )
+        succesfulIndicies = []
+        summaries = []
 
-                if(index < len(texts_df) - 1):
-                    summaries.write('{0}\n'.format(generatedSummary))
-                else:
-                    summaries.write('{0}'.format(generatedSummary))
+        for row in texts_df.itertuples(index=True):
+            index = row[0]
+            text = row[1]
+            generatedSummary = summarizerSwitch.toggleAndExecuteSummarizer(
+                summarizerKey, text
+            )
+
+            if generatedSummary:
+                summaries.append(generatedSummary)
+                succesfulIndicies.append(index)
+
+        with open(generatedSummariesFilePath, 'w') as results:
+            summariesString = '\n'.join(summaries)
+            results.write(summariesString)
+
+        self.constructGoldSubsetWithSuccesfulIndices(
+            sampleFilepath, succesfulIndicies, summarizerKey
+        )
+
+    def constructGoldSubsetWithSuccesfulIndices(
+        self, sampleFilepath, indices, summarizerKey): \
+
+        goldSubsetPath = self.generategoldSubsetFilePath(
+            sampleFilepath, summarizerKey
+        )
+        print(goldSubsetPath)
+        return goldSubsetPath
+
+    def generategoldSubsetFilePath(self, sampleFilepath, summarizerKey):
+        sampleFileNameList = sampleFilepath.split("/")
+        sampleFileName = sampleFileNameList[len(sampleFileNameList) - 1]
+
+        sampleFileNameLessExt = sampleFileName
+        ext = ''
+        if '.' in sampleFileName:
+            sampleFileName = sampleFileName.split('.')
+            sampleFileNameLessExt = sampleFileName[len(sampleFileName) - 2]
+            ext = sampleFileName[len(sampleFileName) - 1]
+
+        sampleGoldFilePath = '../data/gold_subsets/{0}_{1}_gold.{2}'.format(
+            summarizerKey, sampleFileNameLessExt, ext
+        )
+
+        return sampleGoldFilePath
+
+    def generateSampleGoldFilePath(self, sampleFilepath):
+
+        return ""
 
 
 class Switcher(object):
@@ -200,8 +251,21 @@ class Switcher(object):
         self.benchmark = benchmarkInstance
         self.summarizer_library = benchmarkInstance.summarizer_library
         self.functionMap = {
-            'smmrre': self.smmrre
+            'smmrre': self.smmrre,
+            'sumy': self.sumy
         }
+
+    def joinTokenizedSentences(self, text):
+        benchmark = self.benchmark
+        sentenceSeperator = benchmark.sentenceSeperator
+        newText = text.replace(sentenceSeperator, '')
+        return newText
+
+    def splitTokenizedSentences(self, text):
+        benchmark = self.benchmark
+        sentenceSeperator = benchmark.sentenceSeperator
+        newText = text.split(sentenceSeperator)
+        return newText
 
     def toggleAndExecuteSummarizer(self, summarizerKey, text):
         functions = self.functionMap
@@ -211,12 +275,6 @@ class Switcher(object):
             return method(text)  # Method should return a summary
         error = '{0}: Is not an available summarizer'.format(summarizerKey)
         raise ValueError(error)
-
-    def joinTokenizedSentences(self, text):
-        benchmark = self.benchmark
-        sentenceSeperator = benchmark.sentenceSeperator
-        newText = text.replace(sentenceSeperator, '')
-        return newText
 
     def smmrre(self, text):
         benchmark = self.benchmark
@@ -233,6 +291,20 @@ class Switcher(object):
 
         return summary
 
+    def sumy(self, text):
+        benchmark = self.benchmark
+        numSentences = benchmark.sentenceCount
+
+        if benchmark.preTokenized:
+            # sumy has it's own tokenizer
+            text = self.joinTokenizedSentences(text)
+
+        sumyClass = self.summarizer_library['sumy']
+        sumy = sumyClass(text)
+
+        summary = sumy.summarize(numSentences, 'english')
+
+        return summary
 
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()

@@ -1,119 +1,127 @@
 from nltk.stem.porter import PorterStemmer
-stemmer = PorterStemmer()
 from nltk import tokenize
 
 
-from autocorrect import spell
+# from autocorrect import spell
 from collections import defaultdict
 from math import log
 
 
-import re 
+import re
 
-from ll import * #import ListNode, LinkedList
+from ll import *  # import ListNode, LinkedList
 from nltk.corpus import stopwords
 import string
 
+stemmer = PorterStemmer()
+
 STOP_WORDS_SET = set(stopwords.words('english'))
-LOWERCASE = set(string.ascii_lowercase).union(set(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]))
+LOWERCASE = set(string.ascii_lowercase).union(
+    set(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
+)
+
 UPPERCASE = set(string.ascii_uppercase)
 
+
 class smmrRE:
-  def __init__(self, rawText):
-    rawText = re.sub(' +',' ', rawText) #Removes double spaces
-    self.stemSet = defaultdict(set)
-    self.sentences = tokenize.sent_tokenize(rawText) #Kept so that we can refer back to this list of sentences by index to fetch the sentences that ranked the highests
-    self.prunedSentences = self.pruneSentences() 
-    self.occurences = defaultdict(lambda: 0)
-    self.maxHeap = LinkedList()
-    self.totalWords = 0
+    def __init__(self, rawText):
+        rawText = re.sub(' +', ' ', rawText)  # Removes double spaces
+        self.stemSet = defaultdict(set)
+        self.sentences = tokenize.sent_tokenize(rawText)
+        self.prunedSentences = self.pruneSentences()
+        self.occurences = defaultdict(lambda: 0)
+        self.maxHeap = LinkedList()
+        self.totalWords = 0
 
-  def summarize(self, numSentences=5):
-    numSentences = min(numSentences, len(self.sentences))
-    self.associateGrammarCounterParts()
-    self.assignPointsToStems()
-    self.rankSentences()
+    def summarize(self, numSentences=5):
+        numSentences = min(numSentences, len(self.sentences))
+        self.associateGrammarCounterParts()
+        self.assignPointsToStems()
+        self.rankSentences()
 
-    topSentencesIndicies = self.maxHeap.topIndices(numSentences)
+        topSentencesIndicies = self.maxHeap.topIndices(numSentences)
 
-    topSentencesIndicies.sort()
+        topSentencesIndicies.sort()
 
-    summary = self.buildSummary(topSentencesIndicies)
-    return summary
+        summary = self.buildSummary(topSentencesIndicies)
+        return summary
 
-  def buildSummary(self, chronologicalTopSentenceIndices):
-    sentences = self.sentences
-    listOfSummarySentences = [sentences[ind] for ind in chronologicalTopSentenceIndices]
-    summary = ' '.join(listOfSummarySentences)
+    def buildSummary(self, chronologicalTopSentenceIndices):
+        sentences = self.sentences
+        listOfSummarySentences = [
+            sentences[ind] for ind in chronologicalTopSentenceIndices
+        ]
+        summary = ' '.join(listOfSummarySentences)
 
-    return summary
+        return summary
 
-  def pruneSentences(self):
-    sentences = self.sentences
-    prunedSentences = [[self.pruneWord(word) for word in sentence.split(" ")] for sentence in sentences]
-    strippedPrunedSentences = [ list(filter(None, sentence_word_list)) for sentence_word_list in prunedSentences] #Strip sentences of empty strings
-    return strippedPrunedSentences
+    def pruneSentences(self):
+        sentences = self.sentences
+        prunedSentences = [
+            [self.pruneWord(word) for word in sentence.split(" ")]
+            for sentence in sentences
+        ]
 
-  def pruneWord(self, word):
-    prunedWord = ''.join(char for char in word if self.isAlpha(char))
-    return prunedWord
+        strippedPrunedSentences = [  # Strip sentences of empty strings
+            list(filter(None, sentence_word_list))
+            for sentence_word_list in prunedSentences]
 
-  def isAlpha(self, char):
-    return (char in LOWERCASE) or (char in UPPERCASE)
+        return strippedPrunedSentences
 
-  def associateGrammarCounterParts(self):
-    [self.associateGrammarCounterPartsForSentence(sentence) for sentence in self.prunedSentences]
-    return self.stemSet
+    def pruneWord(self, word):
+        prunedWord = ''.join(char for char in word if self.isAlpha(char))
+        return prunedWord
 
-  def associateGrammarCounterPartsForSentence(self, sentence):
-    for word in sentence:
-      wordLower = word.lower()
-      if wordLower not in STOP_WORDS_SET:
-        stem = stemmer.stem(wordLower)
-        self.stemSet[stem].add(wordLower)
-        self.occurences[stem] += 1 #Increase the number of occurences for this stem
-        self.totalWords += 1
+    def isAlpha(self, char):
+        return (char in LOWERCASE) or (char in UPPERCASE)
 
-  def assignPointsToStems(self):
-    self.points = { stem: log(self.fetchCount(stem)) for stem in self.stemSet } # { stem: log(self.fetchCount(stem)) for stem in self.stemSet } 
-    return self.points
+    def associateGrammarCounterParts(self):
+        for sentence in self.prunedSentences:
+            self.associateGrammarCounterPartsForSentence(sentence)
 
-  def fetchCount(self, stem):
-    return self.occurences[stem]
+        return self.stemSet
 
-  def rankSentences(self):
-    sentences = self.prunedSentences
+    def associateGrammarCounterPartsForSentence(self, sentence):
+        for word in sentence:
+            wordLower = word.lower()
+            if wordLower not in STOP_WORDS_SET:
+                stem = stemmer.stem(wordLower)
+                self.stemSet[stem].add(wordLower)
+                self.occurences[stem] += 1
+                self.totalWords += 1
 
-    for index in range(len(sentences)):
-      sentence = sentences[index]
-      popularity = self.calculateSentencePopularity(sentence)
-      self.maxHeap.insertVal(popularity, index)
+    def assignPointsToStems(self):
+        self.points = {
+            stem: log(self.fetchCount(stem))
+            for stem in self.stemSet
+        }
+        # { stem: log(self.fetchCount(stem)) for stem in self.stemSet }
+        return self.points
 
-  def calculateSentencePopularity(self, sentence):
-    wordPoints = []
-    for word in sentence:
-      wordLower = word.lower()
-      if wordLower not in STOP_WORDS_SET:
-        stem = stemmer.stem(wordLower)
-        points = self.points[stem]
-        wordPoints.append(points)
-    if not wordPoints:
-      return 0
+    def fetchCount(self, stem):
+        return self.occurences[stem]
 
-    popularity = float(sum(wordPoints)) #/ float(len(wordPoints))
+    def rankSentences(self):
+        sentences = self.prunedSentences
 
-    return popularity
-'''
-path = "/Users/layne/OneDrive - Adobe Systems Inc/Project/reggae_sample.txt"
-musk = open(path,'r')
+        for index in range(len(sentences)):
+            sentence = sentences[index]
+            popularity = self.calculateSentencePopularity(sentence)
+            self.maxHeap.insertVal(popularity, index)
 
-testString = musk.readlines()[0]
+    def calculateSentencePopularity(self, sentence):
+        wordPoints = []
+        for word in sentence:
+            wordLower = word.lower()
+            if wordLower not in STOP_WORDS_SET:
+                stem = stemmer.stem(wordLower)
+                points = self.points[stem]
+                wordPoints.append(points)
 
+        if not wordPoints:
+            return 0
 
-t = smmrRE(testString)
-#print(t.prunedSentences[20])
-print(t.summarize(7))
+        popularity = float(sum(wordPoints))
+        # / float(len(wordPoints))
 
-#print(t.maxHeap)
-#print(t.occurences)
-'''
+        return popularity
