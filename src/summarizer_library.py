@@ -17,7 +17,7 @@ def fetchSummarizers(enabledSummarizers):
     ]
 
     desiredSummarizers = dict(
-        (k, SUMMARIZERS[k]) for k in enabledSummarizers if k in SUMMARIZERS
+        (k.lower(), SUMMARIZERS[k]) for k in enabledSummarizers if k in SUMMARIZERS
     )
 
     return desiredSummarizers
