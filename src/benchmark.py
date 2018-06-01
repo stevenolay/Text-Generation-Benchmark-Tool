@@ -438,9 +438,9 @@ class EvaluateSwitch(object):
         avg = {
             'rouge-1': {k: sumRouge1[k] / float(numSamples)
                         for k in sumRouge1 if numSamples > 0},
-            'rouge-2': {k: sumRouge1[k] / float(numSamples)
+            'rouge-2': {k: sumRouge2[k] / float(numSamples)
                         for k in sumRouge2 if numSamples > 0},
-            'rouge-l': {k: sumRouge1[k] / float(numSamples)
+            'rouge-l': {k: sumRougel[k] / float(numSamples)
                         for k in sumRougel if numSamples > 0}
         }
 
