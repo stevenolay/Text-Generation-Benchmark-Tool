@@ -2,8 +2,9 @@ import configparser
 import json
 import glob
 import os
+import codecs
 
-import pandas as pd
+from tqdm import tqdm
 
 from summarizer_library import fetchSummarizers
 from evaluator_library import fetchEvaluators
@@ -19,6 +20,12 @@ from mappings import (
     DEFAULT_SENTENCE_SEPERATOR,
     DEFAULT_SENTENCE_COUNT
 )
+
+import logging
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT,
+                    level=logging.DEBUG)
+LOGGER = logging.getLogger()
 
 
 class benchmark:
@@ -41,25 +48,20 @@ class benchmark:
             else DEFAULT_SENTENCE_SEPERATOR
 
         # load filepaths of samples
-        self.sample_filepaths, self.dataSetToSampleFilesMap = \
-            self.walkDataSampleFolders()
-
-        self.dataFrames = self.cacheDataFramesForSamples()
-        self.goldDataFrames = self.cacheDataFramesForGoldSamples()
+        self.corpus_filepaths, self.dataSetToCorpusFilesMap = \
+            self.walkDataCorporaFolders()
 
         # Load Summarizers
         summarizers = self.fetchSettingByKey(
             'summarizers',
-            expect_list=True
-        )
+            expect_list=True)
 
         self.validateOptions(summarizers, SUPPORTED_SUMMARIZERS)
         self.summarizers = summarizers
         # Load Evaluatos
         evaluators = self.fetchSettingByKey(
             'evaluation_systems',
-            expect_list=True
-        )
+            expect_list=True)
 
         self.validateOptions(evaluators, SUPPORTED_EVAL_SYSTEMS)
         self.evaluators = evaluators
@@ -72,8 +74,8 @@ class benchmark:
         # Load Evaluation Systems
         evaluationSystems = self.fetchSettingByKey(
             'evaluation_systems',
-            expect_list=True
-        )
+            expect_list=True)
+
         self.validateOptions(evaluationSystems, SUPPORTED_EVAL_SYSTEMS)
         self.evaluationSystems = evaluationSystems
 
@@ -89,7 +91,7 @@ class benchmark:
 
         # load summarizers
         self.summarizer_library = fetchSummarizers(summarizers)
-        self.summarizerSwitch = Switcher(self)
+        self.summarizerSwitch = SummarizerSwitch(self)
 
         # load evaluators
         self.evaluation_library = fetchEvaluators(evaluators)
@@ -112,44 +114,21 @@ class benchmark:
                 }
             }
         '''
-        self.sampleToSummaryMap = defaultdict(dict)
+        self.corpusToSummaryMap = defaultdict(dict)
 
-    def cacheDataFramesForSamples(self):
-        textSeperator = self.textSeperator
-        sampleFilePaths = self.sample_filepaths
-        dataFrames = {}
-        for filePath in sampleFilePaths:
-            dataFrames[filePath] = pd.read_csv(
-                filePath, sep=textSeperator, header=None
-            )
-
-        return dataFrames
-
-    def cacheDataFramesForGoldSamples(self):
-        textSeperator = self.textSeperator
-        sampleFilePaths = self.sample_filepaths
-        dataFrames = {}
-        for filePath in sampleFilePaths:
-            goldPath = self.generateSampleGoldFilePath(filePath)
-            dataFrames[goldPath] = pd.read_csv(
-                goldPath, sep=textSeperator, header=None
-            )
-
-        return dataFrames
-
-    def walkDataSampleFolders(self):
+    def walkDataCorporaFolders(self):
         dataFolders = self.data_folders
 
-        samples_filepaths = []  # Flat List of All avaialble samples
+        corpora_filepaths = []  # Flat List of All avaialble corpora
 
-        dataSetToSampleFilesMap = {}   # Keeps track of which samples
+        dataSetToCorpusFilesMap = {}   # Keeps track of which samples
         # belong to which datasets
         for folder in dataFolders:
             filesInFolder = glob.glob(str(os.path.join(folder, "samples/*")))
-            samples_filepaths.extend(filesInFolder)
-            dataSetToSampleFilesMap[folder] = filesInFolder
+            corpora_filepaths.extend(filesInFolder)
+            dataSetToCorpusFilesMap[folder] = filesInFolder
 
-        return samples_filepaths, dataSetToSampleFilesMap
+        return corpora_filepaths, dataSetToCorpusFilesMap
 
     def initSettings(self):
         settings = configparser.ConfigParser()
@@ -219,113 +198,71 @@ class benchmark:
         return decodedSeperator
 
     def runSummarizations(self, summarizerKey):
-        sampleFilepaths = self.sample_filepaths
-        for filepath in sampleFilepaths:
-            self.runSummarizationsForSample(filepath, summarizerKey)
+        corpusFilePaths = self.corpus_filepaths
+        for filepath in corpusFilePaths:
+            self.runSummarizationsForCorpus(filepath, summarizerKey)
 
-    def generateSummaryFilePath(self, sampleFilepath, summarizerKey):
+    def generateSummaryFilePath(self, corpusFilePath, summarizerKey):
 
-        sampleFileName = os.path.basename(sampleFilepath)
+        corpusFileName = os.path.basename(corpusFilePath)
 
         summaryFileName = os.path.join(
             '../data/generated_summaries/',
             '{0}_{1}'.format(
-                summarizerKey, sampleFileName)
+                summarizerKey, corpusFileName)
         )
 
         return summaryFileName
 
-    def runSummarizationsForSample(self, sampleFilepath, summarizerKey):
+    def runSummarizationsForCorpus(self, corpusFilePath, summarizerKey):
         generatedSummariesFilePath = self.generateSummaryFilePath(
-            sampleFilepath, summarizerKey
+            corpusFilePath, summarizerKey
         )
 
         summarizerSwitch = self.summarizerSwitch
 
-        dataFrames = self.dataFrames
-        texts_df = dataFrames[sampleFilepath]
-
         succesfulIndicies = []
-        summaries = []
-        for row in texts_df.itertuples(index=True):
-            index = row[0]
-            text = row[1]
+        fileLength = file_len(corpusFilePath)
+        results = codecs.open(generatedSummariesFilePath, 'w', 'utf-8')
+        samples = codecs.open(corpusFilePath, 'r', 'utf-8')
+
+        LOGGER.info("Generating summaries for corpus: {0}".format(corpusFilePath))
+        for index, text in tqdm(enumerate(samples), total=fileLength):
             generatedSummary = summarizerSwitch.toggleAndExecuteSummarizer(
-                summarizerKey, text
-            )
+                summarizerKey, text)
 
-            if generatedSummary:
-                summaries.append(generatedSummary)
-                succesfulIndicies.append(index)
+            if not generatedSummary:
+                generatedSummary = '0'
             else:
-                summaries.append('0')
+                succesfulIndicies.append(index)
 
-        self.succesfulIndicies[summarizerKey][sampleFilepath] = \
+            if index < (fileLength - 1):
+                results.write('{0}\n'.format(generatedSummary))
+            else:
+                results.write('{0}'.format(generatedSummary))
+
+        samples.close()  # Close the corpora file.
+        results.close()  # Close the results file.
+
+        self.succesfulIndicies[summarizerKey][corpusFilePath] = \
             succesfulIndicies
 
-        with open(generatedSummariesFilePath, 'w') as results:
-            summariesString = '\n'.join(summaries)
-            results.write(summariesString)
-
-        self.sampleToSummaryMap[summarizerKey][sampleFilepath] = \
+        self.corpusToSummaryMap[summarizerKey][corpusFilePath] = \
             generatedSummariesFilePath
 
-        '''
-        self.constructGoldSubsetWithSuccesfulIndices(
-            sampleFilepath, succesfulIndicies, summarizerKey
-        )
-        '''
+    def generateCorpusGoldFilePath(self, corpusFilePath):
+        corpusFileFolder, corpusFileName = os.path.split(corpusFilePath)
+        dataSetFileFolder, subDir = os.path.split(corpusFileFolder)
+        fileName, ext = os.path.splitext(corpusFileName)
 
-    def evaluate(self, summaries, goldPath, goldIndices):
-        goldSummaries = open(goldPath, 'r')
-        goldSummaries = goldSummaries.readlines()
-        j = 0
-        print(goldIndices)
-        for index in goldIndices:
-            goldAbstract = goldSummaries[index]
-            generatedSummary = summaries[j]
-            print(rouge.get_scores(goldAbstract, generatedSummary))
-            j += 1
-
-    def constructGoldSubsetWithSuccesfulIndices(
-        self, sampleFilepath, indices, summarizerKey): \
-
-        '''
-            When summaries fail you need to make sure you run the evaluators
-            with the subset of the golden abstracts for the summarries that
-            were successful.
-        '''
-        goldSubsetPath = self.generateGoldSubsetFilePath(
-            sampleFilepath, summarizerKey
-        )
-
-        return goldSubsetPath
-
-    def generateGoldSubsetFilePath(self, sampleFilepath, summarizerKey):
-        sampleFileName = os.path.basename(sampleFilepath)
-        fileName, ext = os.path.splitext(sampleFileName)
-
-        sampleGoldFilePath = os.path.join(
-            '../data/gold_subsets/',
-            '{0}_{1}_gold{2}'.format(
-                summarizerKey, fileName, ext)
-        )
-
-        return sampleGoldFilePath
-
-    def generateSampleGoldFilePath(self, sampleFilepath):
-        sampleFileFolder, sampleFileName = os.path.split(sampleFilepath)
-        dataSetFileFolder, subDir = os.path.split(sampleFileFolder)
-        fileName, ext = os.path.splitext(sampleFileName)
-
-        sampleGoldFilePath = os.path.join(
+        corpusGoldFilePath = os.path.join(
             dataSetFileFolder,
             'gold',
             '{0}_gold{1}'.format(
                 fileName, ext)
         )
 
-        return sampleGoldFilePath
+        return corpusGoldFilePath
 
     def runBenchmarking(self):
         summarizerLibrary = self.summarizer_library
@@ -337,92 +274,94 @@ class benchmark:
             self.runEvaluations()
 
     def runEvaluations(self):
-        for dataSet in self.dataSetToSampleFilesMap:
+        for dataSet in self.dataSetToCorpusFilesMap:
             self.evaluateDataSet(dataSet)
 
     def evaluateDataSet(self, dataset):
-        sampleFilepaths = self.dataSetToSampleFilesMap[dataset]
-        sampleReports = ['Report for Dataset:\t{0}\n'.format(dataset)]
-        for sample in sampleFilepaths:
-            sampleReports.append('\n\tReporting for Sample: {0}\n'.format(sample))
-            report = self.evaluateSamplePerSummarizer(sample)
-            sampleReports.extend(['\n\t\t', report])
-        print(''.join(sampleReports))
+        corpusFilePaths = self.dataSetToCorpusFilesMap[dataset]
+        corpusReports = ['Report for Dataset:\t{0}\n'.format(dataset)]
+        for corpus in corpusFilePaths:
+            corpusReports.append(
+                '\n\tReporting for Corpus: {0}\n'.format(corpus)
+            )
+            report = self.evaluateCorpusPerSummarizer(corpus)
+            corpusReports.extend(['\n\t\t', report])
+        print(''.join(corpusReports))
 
-    def evaluateSamplePerSummarizer(self, sampleFilepath):
-        goldPath = self.generateSampleGoldFilePath(sampleFilepath)
-        gold_df = self.goldDataFrames[goldPath]
-
+    def evaluateCorpusPerSummarizer(self, corpusFilepath):
+        goldPath = self.generateCorpusGoldFilePath(corpusFilepath)
+        goldExamples = codecs.open(goldPath, 'r', 'utf-8')
+        # gold_df = self.goldDataFrames[goldPath]
         summarizerReports = []
         for summarizerKey in self.summarizers:
-            summaryPath = self.sampleToSummaryMap[summarizerKey.lower()][sampleFilepath]
-            summaries_df = pd.read_csv(
-                summaryPath, sep='\n', header=None
+            LOGGER.info(
+                "Evaluating Results for Corpus: %s using summarizer: %s",
+                corpusFilepath,
+                summarizerKey
             )
 
             summarizerReports.append(
                 '\n\t\tSummarizer: {0}\n\t\t\t'.format(summarizerKey)
             )
 
-            sampleReport = self.evaluatorSwitch\
-                .executeAndReportEvaluatorsOnSample(
-                    summaries_df, gold_df
-                )
-            summarizerReports.append(sampleReport)
+            summaryPath = self.\
+                corpusToSummaryMap[summarizerKey.lower()][corpusFilepath]
+            summaries = codecs.open(summaryPath, 'r', 'utf-8')
 
+            corpusReport = self.evaluatorSwitch\
+                .executeAndReportEvaluatorsOnCorpus(
+                    summaries, goldExamples
+                )
+            summaries.close()
+            goldExamples.seek(0)  # Reset I/O to point to top of file
+            summarizerReports.append(corpusReport)
+
+        goldExamples.close()
         return ''.join(summarizerReports)
-        '''
-                goldPath = self.generateSampleGoldFilePath(sampleFilepath)
-                self.evaluatorSwitch.toggleAndExecuteEvaluator()
-                self.evaluate(summaries, goldPath, succesfulIndicies)
-        '''
 
 
 class EvaluateSwitch(object):
     def __init__(self, benchmarkInstance):
-        self.sampleDataFrames = benchmarkInstance.dataFrames  # Dataframes
-        # for samples are cached in the benchmark instance
-        self.goldDataFrames = benchmarkInstance.goldDataFrames
         self.benchmark = benchmarkInstance
         self.evaluation_library = benchmarkInstance.evaluation_library
         self.functionMap = {
             'rouge': self.rougeScore
         }
 
-    def executeAndReportEvaluatorsOnSample(self, summariesDF, goldTargetsDF):
-
-        # numRows = sample_df.shape[0]
-        evaluatorReportsForSample = []
+    def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples):
+        evaluatorReportsForCorpus = []
         for evaluator in self.evaluation_library:
             report = self.toggleAndExecuteEvaluator(
-                evaluator, summariesDF, goldTargetsDF)
-            evaluatorReportsForSample.extend(report)
-        return ''.join(evaluatorReportsForSample)
+                evaluator, summaries, goldExamples)
+            evaluatorReportsForCorpus.extend(report)
+        return ''.join(evaluatorReportsForCorpus)
 
     def toggleAndExecuteEvaluator(self, evaluatorKey,
-                                  summariesDF, goldTargetsDF):
+                                  summaries, goldExamples):
         functions = self.functionMap
 
         if evaluatorKey in functions:
             method = functions[evaluatorKey]
-            report = method(summariesDF, goldTargetsDF)
+            report = method(summaries, goldExamples)
             return report
 
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
-    def rougeScore(self, summariesDF, goldTargetsDF):
+    def rougeScore(self, summaries, goldExamples):
         rouge = self.evaluation_library['rouge']
 
         sumRouge1 = {'f': 0.0, 'p': 0.0, 'r': 0.0}
         sumRouge2 = {'f': 0.0, 'p': 0.0, 'r': 0.0}
         sumRougel = {'f': 0.0, 'p': 0.0, 'r': 0.0}
 
+        fileLength = file_len_open(goldExamples)
         numSamples = 0
-        for sample, goldSample in zip(summariesDF.itertuples(index=True),
-                                      goldTargetsDF.itertuples(index=True)):
-            goldText = goldSample[1]
-            sampleHypothesisText = sample[1]
+        for summary, goldExample in tqdm(zip(summaries,
+                                             goldExamples),
+                                         total=fileLength):
+            goldText = goldExample
+            sampleHypothesisText = summary
             if sampleHypothesisText == '0':  # Failed summaries default to 'O'
                 continue
 
@@ -453,7 +392,7 @@ class EvaluateSwitch(object):
         return report
 
 
-class Switcher(object):
+class SummarizerSwitch(object):
     def __init__(self, benchmarkInstance):
         self.benchmark = benchmarkInstance
         self.summarizer_library = benchmarkInstance.summarizer_library
@@ -512,6 +451,28 @@ class Switcher(object):
         summary = sumy.summarize(numSentences, 'english')
 
         return summary
+
+
+def file_len_open(f):
+    for i, l in enumerate(f):
+        pass
+    f.seek(0)
+    return i + 1
+
+
+def file_len(fname):
+    '''
+        Calculates the line count for a given file line by line to prevent
+         loading lines into memory all at once.
+        SOURCE:
+            https://stackoverflow.com/questions/845058/how-to-get-line-count-cheaply-in-python
+    '''
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+        f.seek(0)
+    return i + 1
+
 
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()

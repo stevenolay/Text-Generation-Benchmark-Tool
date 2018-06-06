@@ -1,0 +1,6 @@
+data/example_dataset_en/gold/corpus-large_gold.txt
+data/example_dataset_en/samples/corpus-large.txt
+data/example_dataset_en/samples/.DS_Store
+data/generated_summaries/
+data/.DS_Store
+.DS_Store
