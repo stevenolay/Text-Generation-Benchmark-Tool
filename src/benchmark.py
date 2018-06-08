@@ -349,6 +349,8 @@ class EvaluateSwitch(object):
         raise ValueError(error)
 
     def rougeScore(self, summaries, goldExamples):
+        LOGGER.info("Calculating Rouge Score:")
+
         rouge = self.evaluation_library['rouge']
 
         sumRouge1 = {'f': 0.0, 'p': 0.0, 'r': 0.0}
