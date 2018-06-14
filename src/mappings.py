@@ -8,7 +8,10 @@ SUPPORTED_SUMMARIZERS = set(
     [summarizer.lower() for summarizer in SUPPORTED_SUMMARIZERS]
 )
 
-SUPPORTED_EVAL_SYSTEMS = ['ROUGE', 'METEOR', 'BLEU', 'NIST', 'CIDEr']
+SUPPORTED_EVAL_SYSTEMS = [
+    'ROUGE', 'METEOR', 'BLEU', 'NIST', 'CIDEr', 'pyRouge'
+]
+
 SUPPORTED_EVAL_SYSTEMS = set(
     [system.lower() for system in SUPPORTED_EVAL_SYSTEMS]
 )

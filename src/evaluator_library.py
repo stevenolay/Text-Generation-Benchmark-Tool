@@ -1,11 +1,14 @@
 from rouge import Rouge
 rouge = Rouge()
 
+from pyrouge import Rouge155
+
 
 def fetchEvaluators(enabledEvaluators):
 
     EVALUATORS = {
         'rouge': rouge,
+        'pyrouge': Rouge155
     }
 
     enabledEvaluators = [

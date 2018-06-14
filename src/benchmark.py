@@ -37,7 +37,7 @@ class benchmark:
             'data_folders',
             expect_list=True
         )
-
+        self.subsetsEnabled = True
         # Load Seperators
         textSeperator = self.fetchSeperator('text_seperator')
         self.textSeperator = textSeperator if textSeperator \
@@ -101,16 +101,16 @@ class benchmark:
         self.sentenceCount = int(sentenceCount) if sentenceCount \
             else DEFAULT_SENTENCE_COUNT
 
-        self.succesfulIndicies = defaultdict(dict)  # Dict of sampleFilePaths
-        # And the indices succesfully summarized, grouped by summarizer
+        self.failedIndicies = defaultdict(dict)  # Dict of sampleFilePaths
+        # And the indices unsuccesfully summarized, grouped by summarizer
         # This is used for evaluations. If the summarization of a specific
         # set of text fails it will not have an hypothesis. So it cannot be
         # evaluated. This is how we know which indices to skip.
         '''
             {
                 'summarizer_name': {
-                    'file_path_to_sanple': [0,1,3,4,6,7,8]
-                                    // List of indices succesfully summarized
+                    'file_path_to_sample': set([0,8])
+                                    // set of indices unsuccesfully summarized
                 }
             }
         '''
@@ -221,20 +221,25 @@ class benchmark:
 
         summarizerSwitch = self.summarizerSwitch
 
-        succesfulIndicies = []
+        failedIndicies = set()
         fileLength = file_len(corpusFilePath)
         results = codecs.open(generatedSummariesFilePath, 'w', 'utf-8')
-        samples = codecs.open(corpusFilePath, 'r', 'utf-8')
+        samples = codecs.open(corpusFilePath, 'rb+', 'utf-8')
 
-        LOGGER.info("Generating summaries for corpus: {0}".format(corpusFilePath))
+        LOGGER.info(
+            "Generating summaries for corpus: {0} using summarizer: {1}"
+            .format(corpusFilePath, summarizerKey))
+
         for index, text in tqdm(enumerate(samples), total=fileLength):
             generatedSummary = summarizerSwitch.toggleAndExecuteSummarizer(
                 summarizerKey, text)
 
             if not generatedSummary:
-                generatedSummary = '0'
-            else:
-                succesfulIndicies.append(index)
+                failedIndicies.add(index)
+                if index == fileLength - 1:  # Delete the extra \n(newline)
+                    results.seek(-1, os.SEEK_END)
+                    results.truncate()
+                continue
 
             if index < (fileLength - 1):
                 results.write('{0}\n'.format(generatedSummary))
@@ -244,8 +249,8 @@ class benchmark:
         samples.close()  # Close the corpora file.
         results.close()  # Close the results file.
 
-        self.succesfulIndicies[summarizerKey][corpusFilePath] = \
-            succesfulIndicies
+        self.failedIndicies[summarizerKey][corpusFilePath] = \
+            failedIndicies
 
         self.corpusToSummaryMap[summarizerKey][corpusFilePath] = \
             generatedSummariesFilePath
@@ -291,7 +296,7 @@ class benchmark:
     def evaluateCorpusPerSummarizer(self, corpusFilepath):
         goldPath = self.generateCorpusGoldFilePath(corpusFilepath)
         goldExamples = codecs.open(goldPath, 'r', 'utf-8')
-        # gold_df = self.goldDataFrames[goldPath]
+
         summarizerReports = []
         for summarizerKey in self.summarizers:
             LOGGER.info(
@@ -308,47 +313,113 @@ class benchmark:
                 corpusToSummaryMap[summarizerKey.lower()][corpusFilepath]
             summaries = codecs.open(summaryPath, 'r', 'utf-8')
 
-            corpusReport = self.evaluatorSwitch\
-                .executeAndReportEvaluatorsOnCorpus(
-                    summaries, goldExamples
-                )
+            corpusReport = ''
+            if self.subsetsEnabled:
+                self.generateGoldSubset(
+                    goldPath, corpusFilepath, summarizerKey)
+
+                goldSubsetFilePath = self.generateGoldSubsetFilePath(
+                    corpusFilepath, summarizerKey)
+
+                goldSubset = codecs.open(goldSubsetFilePath, 'r', 'utf-8')
+
+                failedIndicies = set()  # Set the failedIndices to an empty set
+                # no need to skip any summaries as a subset was fully
+                # constructed.
+                corpusReport = self.evaluatorSwitch\
+                    .executeAndReportEvaluatorsOnCorpus(
+                        summaries, goldSubset, failedIndicies
+                    )
+                goldSubset.close()
+            else:
+                failedIndicies = self.\
+                    failedIndicies[summarizerKey.lower()][corpusFilepath]
+                corpusReport = self.evaluatorSwitch\
+                    .executeAndReportEvaluatorsOnCorpus(
+                        summaries, goldExamples, failedIndicies
+                    )
+                goldExamples.seek(0)
+
             summaries.close()
-            goldExamples.seek(0)  # Reset I/O to point to top of file
             summarizerReports.append(corpusReport)
 
         goldExamples.close()
         return ''.join(summarizerReports)
 
+    def generateGoldSubset(self, goldPath, corpusFilepath, summarizerKey):
+        LOGGER.info(
+            "Generating Goldsubset for Corpus: %s using summarizer: %s",
+            corpusFilepath,
+            summarizerKey.lower()
+        )
+
+        failedIndicies = self.\
+            failedIndicies[summarizerKey.lower()][corpusFilepath]
+
+        goldSubsetFilePath = self.generateGoldSubsetFilePath(
+            corpusFilepath, summarizerKey)
+
+        goldSet = codecs.open(goldPath, 'r', 'utf-8')
+        fileLength = file_len(goldPath)
+        goldSubset = codecs.open(goldSubsetFilePath, 'w', 'utf-8')
+
+        for index, text in tqdm(enumerate(goldSet), total=fileLength):
+
+            if index in failedIndicies:
+                if index == fileLength - 1:  # Delete the extra \n(newline)
+                    goldSubset.seek(-1, os.SEEK_END)
+                    goldSubset.truncate()
+                continue
+
+            if index < (fileLength - 1):
+                goldSubset.write('{0}'.format(text))
+            else:
+                goldSubset.write('{0}'.format(text))
+        goldSet.close()
+        goldSubset.close()
+
+    def generateGoldSubsetFilePath(self, corpusFilepath, summarizerKey):
+        corpusFileName = os.path.basename(corpusFilepath)
+        fileName, ext = os.path.splitext(corpusFileName)
+
+        goldSubsetFilePath = os.path.join(
+            '../data/gold_subsets/',
+            '{0}_{1}_gold{2}'.format(
+                summarizerKey.lower(), fileName, ext)
+        )
+        return goldSubsetFilePath
+
 
 class EvaluateSwitch(object):
     def __init__(self, benchmarkInstance):
-        self.benchmark = benchmarkInstance
         self.evaluation_library = benchmarkInstance.evaluation_library
         self.functionMap = {
-            'rouge': self.rougeScore
+            'rouge': self.rougeScore,
+            'pyrouge': self.pyRouge
         }
 
-    def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples):
+    def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples,
+                                           failures):
         evaluatorReportsForCorpus = []
         for evaluator in self.evaluation_library:
             report = self.toggleAndExecuteEvaluator(
-                evaluator, summaries, goldExamples)
+                evaluator, summaries, goldExamples, failures)
             evaluatorReportsForCorpus.extend(report)
         return ''.join(evaluatorReportsForCorpus)
 
     def toggleAndExecuteEvaluator(self, evaluatorKey,
-                                  summaries, goldExamples):
+                                  summaries, goldExamples, failures):
         functions = self.functionMap
 
         if evaluatorKey in functions:
             method = functions[evaluatorKey]
-            report = method(summaries, goldExamples)
+            report = method(summaries, goldExamples, failures)
             return report
 
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
-    def rougeScore(self, summaries, goldExamples):
+    def rougeScore(self, summaries, goldExamples, failures):
         LOGGER.info("Calculating Rouge Score:")
 
         rouge = self.evaluation_library['rouge']
@@ -357,15 +428,19 @@ class EvaluateSwitch(object):
         sumRouge2 = {'f': 0.0, 'p': 0.0, 'r': 0.0}
         sumRougel = {'f': 0.0, 'p': 0.0, 'r': 0.0}
 
-        fileLength = file_len_open(goldExamples)
+        goldFileLength = file_len_open(goldExamples)
         numSamples = 0
-        for summary, goldExample in tqdm(zip(summaries,
-                                             goldExamples),
-                                         total=fileLength):
-            goldText = goldExample
-            sampleHypothesisText = summary
-            if sampleHypothesisText == '0':  # Failed summaries default to 'O'
+        for i in tqdm(range(goldFileLength)):
+            goldExample = goldExamples.readline()
+            if numSamples in failures:
+                # If the summary failed we skip to the next gold example
+                numSamples += 1
                 continue
+            summary = summaries.readline()  # Only proceed the summary read
+            # if the current sample count did not fail.
+
+            sampleHypothesisText = summary
+            goldText = goldExample
 
             score = rouge.get_scores(sampleHypothesisText, goldText)[0]
             sumRouge1 = {k: sumRouge1[k] + score['rouge-1'][k]
@@ -388,6 +463,43 @@ class EvaluateSwitch(object):
         report = [
             'This is the result of the Rogue Score:\n\t\t\t',
             str(avg),
+            '\n'
+        ]
+
+        return report
+
+    def pyRouge(self, summaries, goldExamples, failures):
+        LOGGER.info("Calculating pyRouge score:")
+
+        summaryPath = summaries.name
+        goldPath = goldExamples.name
+
+        Rouge155 = self.evaluation_library['pyrouge']
+
+        rouge_args = [
+            '-c', 95,
+            '-U',
+            '-r', 1,
+            '-n', 2,
+            '-a',
+        ]
+
+        args_str = ' '.join(map(str, rouge_args))
+        # rouge = Rouge155(rouge_args=args_str)
+
+        rouge = Rouge155()
+        rouge.system_dir = '../data/generated_summaries'
+        rouge.model_dir = '../data/gold_subsets'
+
+        rouge.system_filename_pattern = '.*-(\d+).txt'
+        rouge.model_filename_pattern = '.*-#ID#_gold.txt'
+        output = rouge.convert_and_evaluate()
+
+        print(output)
+
+        report = [
+            'This is the result of the Rogue Score:\n\t\t\t',
+            str('avg'),
             '\n'
         ]
 
