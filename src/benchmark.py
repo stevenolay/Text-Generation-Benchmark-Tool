@@ -598,6 +598,7 @@ def copyFile(src, dst):
 
 
 def file_len_open(f):
+    i = -1
     for i, l in enumerate(f):
         pass
     f.seek(0)
@@ -611,6 +612,7 @@ def file_len(fname):
         SOURCE:
             https://stackoverflow.com/questions/845058/how-to-get-line-count-cheaply-in-python
     '''
+    i = -1
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
