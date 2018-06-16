@@ -494,9 +494,9 @@ class EvaluateSwitch(object):
 
                 summary_fn = '%i.txt' % i
                 gold_fn = '%i.%i.txt' % (i, 0)
-                with codecs.open(os.path.join(model_dir, gold_fn), 'w') as f:
+                with codecs.open(os.path.join(model_dir, gold_fn), 'w', 'utf-8') as f:
                     f.write(goldExample)
-                with codecs.open(os.path.join(system_dir, summary_fn), 'w') as f:
+                with codecs.open(os.path.join(system_dir, summary_fn), 'w', 'utf-8') as f:
                     f.write(summary)
 
             '''
