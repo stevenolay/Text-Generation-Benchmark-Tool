@@ -125,7 +125,7 @@ class benchmark:
         dataSetToCorpusFilesMap = {}   # Keeps track of which samples
         # belong to which datasets
         for folder in dataFolders:
-            filesInFolder = glob.glob(str(os.path.join(folder, 'samples/*')))
+            filesInFolder = glob.glob(str(os.path.join(folder, 'samples', '*')))
             corpora_filepaths.extend(filesInFolder)
             dataSetToCorpusFilesMap[folder] = filesInFolder
 
@@ -208,7 +208,7 @@ class benchmark:
         corpusFileName = os.path.basename(corpusFilePath)
 
         summaryFileName = os.path.join(
-            '../data/generated_summaries/',
+            '..', 'data', 'generated_summaries',
             '{0}_{1}'.format(
                 summarizerKey, corpusFileName)
         )
@@ -385,7 +385,7 @@ class benchmark:
         fileName, ext = os.path.splitext(corpusFileName)
 
         goldSubsetFilePath = os.path.join(
-            '../data/gold_subsets/',
+            '..', 'data', 'gold_subsets',
             '{0}_{1}_gold{2}'.format(
                 summarizerKey.lower(), fileName, ext)
         )
