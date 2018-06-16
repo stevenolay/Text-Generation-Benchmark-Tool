@@ -620,5 +620,13 @@ def file_len(fname):
     return i + 1
 
 
+def create_folder_if_not_exists(directory):
+    '''
+    Create the folder if it doesn't exist already.
+    '''
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+create_folder_if_not_exists(os.path.join('..', 'data', 'generated_summaries'))
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()
