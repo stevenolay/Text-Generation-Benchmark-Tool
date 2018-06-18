@@ -499,7 +499,6 @@ class EvaluateSwitch(object):
                 with codecs.open(os.path.join(system_dir, summary_fn), 'w') as f:
                     f.write(summary)
 
-            '''
             rouge_args = [
                 '-c', 95,
                 '-U',
@@ -507,11 +506,11 @@ class EvaluateSwitch(object):
                 '-n', 2,
                 '-a',
             ]
-            '''
-            # args_str = ' '.join(map(str, rouge_args))
-            # rouge = Rouge155(rouge_args=args_str)
-
+            \
+            args_str = ' '.join(map(str, rouge_args))
+            #rouge = Rouge155(rouge_args=args_str)
             rouge = Rouge155()
+
             rouge.system_dir = system_dir
             rouge.model_dir = model_dir
             rouge.system_filename_pattern = '(\d+).txt'
