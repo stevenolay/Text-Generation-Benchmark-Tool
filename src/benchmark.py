@@ -12,6 +12,8 @@ from evaluator_library import fetchEvaluators
 
 from collections import defaultdict
 
+from SummarizerSwitch import SummarizerSwitch
+
 from mappings import (
     SUPPORTED_EVAL_SYSTEMS,
     SUPPORTED_TOKENIZERS,
@@ -125,7 +127,8 @@ class benchmark:
         dataSetToCorpusFilesMap = {}   # Keeps track of which samples
         # belong to which datasets
         for folder in dataFolders:
-            filesInFolder = glob.glob(str(os.path.join(folder, 'samples', '*')))
+            filesInFolder = glob.glob(
+                str(os.path.join(folder, 'samples', '*')))
             corpora_filepaths.extend(filesInFolder)
             dataSetToCorpusFilesMap[folder] = filesInFolder
 
@@ -457,11 +460,11 @@ class EvaluateSwitch(object):
             numSamples += 1
 
         avg = {
-            'rouge-1': {k: sumRouge1[k] / float(numSamples)
+            'rouge-1': {k: float(sumRouge1[k]) / float(numSamples)
                         for k in sumRouge1 if numSamples > 0},
-            'rouge-2': {k: sumRouge2[k] / float(numSamples)
+            'rouge-2': {k: float(sumRouge2[k]) / float(numSamples)
                         for k in sumRouge2 if numSamples > 0},
-            'rouge-l': {k: sumRougel[k] / float(numSamples)
+            'rouge-l': {k: float(sumRougel[k]) / float(numSamples)
                         for k in sumRougel if numSamples > 0}
         }
 
@@ -528,67 +531,6 @@ class EvaluateSwitch(object):
         return report
 
 
-class SummarizerSwitch(object):
-    def __init__(self, benchmarkInstance):
-        self.benchmark = benchmarkInstance
-        self.summarizer_library = benchmarkInstance.summarizer_library
-        self.functionMap = {
-            'smmrre': self.smmrre,
-            'sumy': self.sumy
-        }
-
-    def joinTokenizedSentences(self, text):
-        benchmark = self.benchmark
-        sentenceSeperator = benchmark.sentenceSeperator
-        newText = text.replace(sentenceSeperator, '')
-        return newText
-
-    def splitTokenizedSentences(self, text):
-        benchmark = self.benchmark
-        sentenceSeperator = benchmark.sentenceSeperator
-        newText = text.split(sentenceSeperator)
-        return newText
-
-    def toggleAndExecuteSummarizer(self, summarizerKey, text):
-        functions = self.functionMap
-
-        if summarizerKey in functions:
-            method = functions[summarizerKey]
-            return method(text)  # Method should return a summary
-        error = '{0}: Is not an available summarizer'.format(summarizerKey)
-        raise ValueError(error)
-
-    def smmrre(self, text):
-        benchmark = self.benchmark
-        numSentences = benchmark.sentenceCount
-
-        if benchmark.preTokenized:
-            # smmrRE expects text to not be pretokenized
-            text = self.joinTokenizedSentences(text)
-
-        smmrREClass = self.summarizer_library['smmrre']
-        smmrRE = smmrREClass(text)
-
-        summary = smmrRE.summarize(numSentences)
-
-        return summary
-
-    def sumy(self, text):
-        benchmark = self.benchmark
-        numSentences = benchmark.sentenceCount
-
-        if benchmark.preTokenized:
-            # sumy has it's own tokenizer
-            text = self.joinTokenizedSentences(text)
-
-        sumyClass = self.summarizer_library['sumy']
-        sumy = sumyClass(text)
-
-        summary = sumy.summarize(numSentences, 'english')
-
-        return summary
-
-
 def copyFile(src, dst):
     with codecs.open(src, 'r', 'utf-8') as f:
         with codecs.open(dst, 'w', 'utf-8') as f1:
@@ -626,6 +568,8 @@ def create_folder_if_not_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+
 create_folder_if_not_exists(os.path.join('..', 'data', 'generated_summaries'))
+
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()

@@ -3,7 +3,15 @@ SUPPORTED_TOKENIZERS = set(
     [tokenizer.lower() for tokenizer in SUPPORTED_TOKENIZERS]
 )
 
-SUPPORTED_SUMMARIZERS = ['smmrRE', 'smmry', 'sumy']
+SUPPORTED_SUMMARIZERS = [
+    'smmrRE', 'smmry', 'sumyLSA',
+    'sumyLuhn', 'sumyKL', 'sumyLexRank',
+    'sumyRandom', 'sumyEdmundsonKey',
+    'sumyEdmundsonLocation', 'sumyEdmundsonCue',
+    'sumyEdmundson', 'sumyEdmundsonTitle',
+    'sumySumBasic', 'sumyTextRank'
+]
+
 SUPPORTED_SUMMARIZERS = set(
     [summarizer.lower() for summarizer in SUPPORTED_SUMMARIZERS]
 )
