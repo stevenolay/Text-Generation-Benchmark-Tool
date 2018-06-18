@@ -125,7 +125,7 @@ class benchmark:
         dataSetToCorpusFilesMap = {}   # Keeps track of which samples
         # belong to which datasets
         for folder in dataFolders:
-            filesInFolder = glob.glob(str(os.path.join(folder, 'samples/*')))
+            filesInFolder = glob.glob(str(os.path.join(folder, 'samples', '*')))
             corpora_filepaths.extend(filesInFolder)
             dataSetToCorpusFilesMap[folder] = filesInFolder
 
@@ -208,7 +208,7 @@ class benchmark:
         corpusFileName = os.path.basename(corpusFilePath)
 
         summaryFileName = os.path.join(
-            '../data/generated_summaries/',
+            '..', 'data', 'generated_summaries',
             '{0}_{1}'.format(
                 summarizerKey, corpusFileName)
         )
@@ -385,7 +385,7 @@ class benchmark:
         fileName, ext = os.path.splitext(corpusFileName)
 
         goldSubsetFilePath = os.path.join(
-            '../data/gold_subsets/',
+            '..', 'data', 'gold_subsets',
             '{0}_{1}_gold{2}'.format(
                 summarizerKey.lower(), fileName, ext)
         )
@@ -494,9 +494,9 @@ class EvaluateSwitch(object):
 
                 summary_fn = '%i.txt' % i
                 gold_fn = '%i.%i.txt' % (i, 0)
-                with codecs.open(os.path.join(model_dir, gold_fn), 'w') as f:
+                with codecs.open(os.path.join(model_dir, gold_fn), 'w', 'utf-8') as f:
                     f.write(goldExample)
-                with codecs.open(os.path.join(system_dir, summary_fn), 'w') as f:
+                with codecs.open(os.path.join(system_dir, summary_fn), 'w', 'utf-8') as f:
                     f.write(summary)
 
             rouge_args = [
@@ -619,5 +619,13 @@ def file_len(fname):
     return i + 1
 
 
+def create_folder_if_not_exists(directory):
+    '''
+    Create the folder if it doesn't exist already.
+    '''
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+create_folder_if_not_exists(os.path.join('..', 'data', 'generated_summaries'))
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()
