@@ -4,9 +4,14 @@ import glob
 import os
 import codecs
 
-import tempfile
-from tqdm import tqdm
 
+from tqdm import tqdm
+from utils import (
+    TemporaryDirectory,
+    file_len_open,
+    file_len,
+    create_folder_if_not_exists
+)
 from summarizer_library import fetchSummarizers
 from evaluator_library import fetchEvaluators
 
@@ -29,6 +34,13 @@ FORMAT = '%(asctime)-15s %(message)s'
 logging.basicConfig(format=FORMAT,
                     level=logging.DEBUG)
 LOGGER = logging.getLogger()
+
+try:  # Used for Python 2 compatibility
+    import sys
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
+except NameError:
+    pass
 
 
 class benchmark:
@@ -197,7 +209,13 @@ class benchmark:
         except configparser.NoOptionError:
             return None
 
-        decodedSeperator = bytes(seperator, 'utf-8').decode('unicode_escape')
+        decodedSeperator = seperator
+        try:  # Python 3
+            decodedSeperator = bytes(seperator, 'utf-8') \
+                .decode('unicode_escape')
+        except TypeError:  # Python 2
+            decodedSeperator = bytes(seperator) \
+                .decode('unicode_escape')
 
         return decodedSeperator
 
@@ -480,8 +498,8 @@ class EvaluateSwitch(object):
         LOGGER.info('Calculating pyRouge score:')
         Rouge155 = self.evaluation_library['pyrouge']
         output = ''
-        outputDict = {}
-        with tempfile.TemporaryDirectory() as temp_dir:
+
+        with TemporaryDirectory() as temp_dir:
             system_dir = os.path.join(temp_dir, 'system')
             model_dir = os.path.join(temp_dir, 'model')
             os.makedirs(system_dir)
@@ -497,21 +515,16 @@ class EvaluateSwitch(object):
 
                 summary_fn = '%i.txt' % i
                 gold_fn = '%i.%i.txt' % (i, 0)
-                with codecs.open(os.path.join(model_dir, gold_fn), 'w', 'utf-8') as f:
+                with codecs.open(os.path.join(
+                    model_dir, gold_fn), 'w', 'utf-8'
+                ) as f:
                     f.write(goldExample)
-                with codecs.open(os.path.join(system_dir, summary_fn), 'w', 'utf-8') as f:
+
+                with codecs.open(os.path.join(
+                    system_dir, summary_fn), 'w', 'utf-8'
+                ) as f:
                     f.write(summary)
 
-            rouge_args = [
-                '-c', 95,
-                '-U',
-                '-r', 1,
-                '-n', 2,
-                '-a',
-            ]
-            \
-            args_str = ' '.join(map(str, rouge_args))
-            #rouge = Rouge155(rouge_args=args_str)
             rouge = Rouge155()
 
             rouge.system_dir = system_dir
@@ -520,7 +533,6 @@ class EvaluateSwitch(object):
             rouge.model_filename_pattern = '#ID#.\d+.txt'
 
             output = rouge.convert_and_evaluate()
-            outputDict = rouge.output_to_dict(output)
 
         report = [
             '\n\t\t\tThis is the result of the pyRogue Score:\n\t\t\t\t',
@@ -529,44 +541,6 @@ class EvaluateSwitch(object):
         ]
 
         return report
-
-
-def copyFile(src, dst):
-    with codecs.open(src, 'r', 'utf-8') as f:
-        with codecs.open(dst, 'w', 'utf-8') as f1:
-            for line in f:
-                f1.write(line)
-
-
-def file_len_open(f):
-    i = -1
-    for i, l in enumerate(f):
-        pass
-    f.seek(0)
-    return i + 1
-
-
-def file_len(fname):
-    '''
-        Calculates the line count for a given file line by line to prevent
-         loading lines into memory all at once.
-        SOURCE:
-            https://stackoverflow.com/questions/845058/how-to-get-line-count-cheaply-in-python
-    '''
-    i = -1
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-        f.seek(0)
-    return i + 1
-
-
-def create_folder_if_not_exists(directory):
-    '''
-    Create the folder if it doesn't exist already.
-    '''
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
 
 create_folder_if_not_exists(os.path.join('..', 'data', 'generated_summaries'))
