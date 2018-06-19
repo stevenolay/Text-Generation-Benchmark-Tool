@@ -12,6 +12,7 @@ class SummarizerSwitch(object):
         self.functionMap = {
             'smmrre': self.smmrre,
         }
+
         self.functionMap.update(sumyFunctionMap)
 
     def joinTokenizedSentences(self, text):
@@ -64,4 +65,3 @@ class SummarizerSwitch(object):
 
             return summary
         return sumyFunc
-
