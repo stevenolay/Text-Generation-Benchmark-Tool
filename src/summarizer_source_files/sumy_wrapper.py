@@ -69,7 +69,10 @@ class sumyWrapper:
             summarizer.stigma_words = parser.stigma_words
 
             summaryList = summarizer(parser.document, SENTENCES_COUNT)
-            summary = ''.join([str(sentence) for sentence in summaryList])
+            try:
+                summary = ''.join([str(sentence) for sentence in summaryList])
+            except:
+                print(summaryList)
 
             return summary
         return summarizeFunc
