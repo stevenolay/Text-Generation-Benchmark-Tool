@@ -69,12 +69,10 @@ class sumyWrapper:
             summarizer.stigma_words = parser.stigma_words
 
             summaryList = summarizer(parser.document, SENTENCES_COUNT)
-            try:
-                summary = ''.join([str(sentence) for sentence in summaryList])
-            except:
-                print(summaryList)
+            summary = ''.join([str(sentence) for sentence in summaryList])
 
             return summary
+
         return summarizeFunc
 
     def summarizeEdmundsonKey(self, text, SENTENCES_COUNT, LANGUAGE):

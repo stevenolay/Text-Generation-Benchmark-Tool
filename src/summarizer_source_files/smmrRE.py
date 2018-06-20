@@ -9,7 +9,7 @@ from math import log
 
 import re
 
-from ll import *  # import ListNode, LinkedList
+from .ll import *  # import ListNode, LinkedList
 from nltk.corpus import stopwords
 import string
 
