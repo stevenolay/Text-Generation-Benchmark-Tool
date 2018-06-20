@@ -9,7 +9,8 @@ SUPPORTED_SUMMARIZERS = [
     'sumyRandom', 'sumyEdmundsonKey',
     'sumyEdmundsonLocation', 'sumyEdmundsonCue',
     'sumyEdmundson', 'sumyEdmundsonTitle',
-    'sumySumBasic', 'sumyTextRank'
+    'sumySumBasic', 'sumyTextRank', 'Sedona',
+    'Recollect'
 ]
 
 SUPPORTED_SUMMARIZERS = set(

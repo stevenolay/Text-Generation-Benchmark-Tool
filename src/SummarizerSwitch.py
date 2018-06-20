@@ -1,4 +1,10 @@
 from summarizer_library import sumyKeys as SUMY_KEYS
+import logging
+
+FORMAT = '%(asctime)-15s %(message)s'
+logging.basicConfig(format=FORMAT,
+                    level=logging.DEBUG)
+LOGGER = logging.getLogger()
 
 
 class SummarizerSwitch(object):
@@ -11,6 +17,8 @@ class SummarizerSwitch(object):
 
         self.functionMap = {
             'smmrre': self.smmrre,
+            'sedona': self.sedona,
+            'recollect': self.recollect
         }
 
         self.functionMap.update(sumyFunctionMap)
@@ -31,10 +39,50 @@ class SummarizerSwitch(object):
         functions = self.functionMap
 
         if summarizerKey in functions:
-            method = functions[summarizerKey]
-            return method(text)  # Method should return a summary
+            summary = None
+            try:
+                method = functions[summarizerKey]
+                # Method should return a summary
+                summary = method(text)
+            except Exception as err:
+                # Failed summariesare logged so they can be investigated.
+                LOGGER.error(str(err))
+
+            return summary
+
         error = '{0}: Is not an available summarizer'.format(summarizerKey)
         raise ValueError(error)
+
+    def recollect(self, text):
+        benchmark = self.benchmark
+        numSentences = benchmark.sentenceCount
+
+        if benchmark.preTokenized:
+            # smmrRE expects text to not be pretokenized
+            text = self.joinTokenizedSentences(text)
+
+        RecollectClass = self.summarizer_library['recollect']
+        LANGUAGE = 'en'
+        recollect = RecollectClass(LANGUAGE)
+
+        summary = recollect.summarize(text, numSentences)
+
+        return summary
+
+    def sedona(self, text):
+        benchmark = self.benchmark
+        numSentences = benchmark.sentenceCount
+
+        if benchmark.preTokenized:
+            # smmrRE expects text to not be pretokenized
+            text = self.joinTokenizedSentences(text)
+
+        SedonaClass = self.summarizer_library['sedona']
+        sedona = SedonaClass()
+
+        summary = sedona.summarize(text, numSentences)
+
+        return summary
 
     def smmrre(self, text):
         benchmark = self.benchmark

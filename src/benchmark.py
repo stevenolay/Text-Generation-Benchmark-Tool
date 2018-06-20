@@ -259,8 +259,11 @@ class benchmark:
             if not generatedSummary:
                 failedIndicies.add(index)
                 if index == fileLength - 1:  # Delete the extra \n(newline)
-                    results.seek(-1, os.SEEK_END)
-                    results.truncate()
+                    try:
+                        results.seek(-1, os.SEEK_END)
+                        results.truncate()
+                    except IOError:  # Fails if file is completely empty
+                        pass
                 continue
 
             if index < (fileLength - 1):
@@ -427,9 +430,12 @@ class EvaluateSwitch(object):
         for evaluator in self.evaluation_library:
             report = self.toggleAndExecuteEvaluator(
                 evaluator, summaries, goldExamples, failures)
+
             summaries.seek(0)
             goldExamples.seek(0)
+
             evaluatorReportsForCorpus.extend(report)
+
         return ''.join(evaluatorReportsForCorpus)
 
     def toggleAndExecuteEvaluator(self, evaluatorKey,
@@ -499,12 +505,21 @@ class EvaluateSwitch(object):
         Rouge155 = self.evaluation_library['pyrouge']
         output = ''
 
+        goldFileLength = file_len(goldExamples.name)
+
+        if len(failures) == goldFileLength:
+            # No summaries were successful
+            return [
+                '\n\t\t\tThe pyRouge score could not be calculated. No'
+                ' summaries were succesfully generated:\n\t\t\t\t',
+            ]
+
         with TemporaryDirectory() as temp_dir:
             system_dir = os.path.join(temp_dir, 'system')
             model_dir = os.path.join(temp_dir, 'model')
             os.makedirs(system_dir)
             os.makedirs(model_dir)
-            goldFileLength = file_len(goldExamples.name)
+
             for i in tqdm(range(goldFileLength)):
                 goldExample = goldExamples.readline()
                 if i in failures:
