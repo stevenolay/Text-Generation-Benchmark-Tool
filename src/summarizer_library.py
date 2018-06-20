@@ -1,8 +1,7 @@
-import sys
-sys.path.insert(0, 'summarizer_source_files')
-
-from smmrRE import smmrRE
-from sumy_wrapper import sumyWrapper
+from summarizer_source_files.smmrRE import smmrRE
+from summarizer_source_files.sumy_wrapper import sumyWrapper
+from summarizer_source_files.Sedona import Sedona
+from summarizer_source_files.Recollect import Recollect
 
 sumyKeys = [
     'sumylsa', 'sumyluhn', 'sumykl', 'sumylexrank',
@@ -16,6 +15,8 @@ def fetchSummarizers(enabledSummarizers):
     sumyWrap = sumyWrapper()
     SUMMARIZERS = {
         'smmrre': smmrRE,
+        'sedona': Sedona,
+        'recollect': Recollect
     }
 
     sumySummarizers = {k: sumyWrap.summarize(k) for k in sumyKeys}
