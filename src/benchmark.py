@@ -3,6 +3,7 @@ import json
 import glob
 import os
 import codecs
+import sys
 
 
 from tqdm import tqdm
@@ -30,9 +31,12 @@ from mappings import (
 )
 
 import logging
+
 FORMAT = '%(asctime)-15s %(message)s'
+LOG_FILENAME = 'allLogs.log'
 logging.basicConfig(format=FORMAT,
-                    level=logging.DEBUG)
+                    level=logging.DEBUG,
+                    filename=LOG_FILENAME)
 LOGGER = logging.getLogger()
 
 try:  # Used for Python 2 compatibility
@@ -110,6 +114,7 @@ class benchmark:
 
         # load evaluators
         self.evaluation_library = fetchEvaluators(evaluators)
+
         self.evaluatorSwitch = EvaluateSwitch(self)
 
         sentenceCount = self.fetchSettingByKey('sentence_count')
@@ -421,7 +426,8 @@ class EvaluateSwitch(object):
         self.evaluation_library = benchmarkInstance.evaluation_library
         self.functionMap = {
             'rouge': self.rougeScore,
-            'pyrouge': self.pyRouge
+            'pyrouge': self.pyRouge,
+            'meteor': self.meteor
         }
 
     def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples,
@@ -450,6 +456,40 @@ class EvaluateSwitch(object):
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
+    def meteor(self, summaries, goldExamples, failures):
+        LOGGER.info('Calculating Meteor Score:')
+
+        meteor = self.evaluation_library['meteor']
+
+        goldFileLength = file_len_open(goldExamples)
+        numSamples = 0
+        sumScores = 0.0
+        for i in tqdm(range(goldFileLength)):
+            goldExample = goldExamples.readline().rstrip('\n')
+            if numSamples in failures:
+                # If the summary failed we skip to the next gold example
+                continue
+            summary = summaries.readline().rstrip('\n')  # Only proceed
+            # the summary read if the current sample count did not fail.
+
+            sampleHypothesisText = summary
+            goldText = goldExample
+
+            score = meteor.score(sampleHypothesisText, [goldText])
+            sumScores += score
+
+            numSamples += 1
+        print(numSamples)
+        avg = float(sumScores) / float(numSamples)
+
+        report = [
+            '\n\t\t\tThis is the result of the Meteor Score:\n\t\t\t\t',
+            str(avg),
+            '\n'
+        ]
+
+        return report
+
     def rougeScore(self, summaries, goldExamples, failures):
         LOGGER.info('Calculating Rouge Score:')
 
@@ -465,7 +505,6 @@ class EvaluateSwitch(object):
             goldExample = goldExamples.readline()
             if numSamples in failures:
                 # If the summary failed we skip to the next gold example
-                numSamples += 1
                 continue
             summary = summaries.readline()  # Only proceed the summary read
             # if the current sample count did not fail.

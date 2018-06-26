@@ -64,7 +64,9 @@ class sumyWrapper:
 
             summarizer = summarizerClass(stemmer)
             summarizer.stop_words = get_stop_words(LANGUAGE)
+            nullWords = get_stop_words(LANGUAGE)
 
+            summarizer.null_words = nullWords
             summarizer.bonus_words = parser.significant_words
             summarizer.stigma_words = parser.stigma_words
 

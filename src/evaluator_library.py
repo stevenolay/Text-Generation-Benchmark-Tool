@@ -1,14 +1,14 @@
 from rouge import Rouge
-rouge = Rouge()
-
 from pyrouge import Rouge155
+from evaluator_source_files.Meteor.Meteor import Meteor
 
 
 def fetchEvaluators(enabledEvaluators):
 
     EVALUATORS = {
-        'rouge': rouge,
-        'pyrouge': Rouge155
+        'rouge': Rouge(),
+        'pyrouge': Rouge155,
+        'meteor': Meteor()
     }
 
     enabledEvaluators = [
