@@ -10,6 +10,7 @@
   - [Settings](#settings)
   - [Running](#running)
 - [Directory structure](#directory-structure)
+- [Adding Dataset](#dataset)
 
 ## <a name="Requirements"></a> Requirements
 The Summarization Benchmark Tool requires Python 3 or 2 and pip.
@@ -90,3 +91,8 @@ $ python src/benchmark.py
     │   └── sumy_wrapper.py
     └── utils.py
 ```
+## <a name="dataset"></a> Adding Datasets
+Datasets are intended to be stored in data/ but you are able to provide comma seperated absolute and relative paths to datasets stored elsewhere in the settings.ini file under general -> data_sets. Note: Even datasets stored in data/ must be specified in the settings.ini. This version does not support autodetection of datasets.
+### <a name="dataset_f"></a> Formatting Datasets
+
+Data sets should contain 2 subfolders. 'gold/' and 'samples/'. Gold should hold your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a '_gold' suffix before the file extension. Files that do not follow this format cannot be discovered by this application.
