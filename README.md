@@ -59,7 +59,8 @@ Refer to src/settings.ini for the available settings. You can run multiple metri
 
 ### <a name="running"></a> Running Benchmark
 ```
-$ python src/benchmark.py
+$ cd src
+$ python benchmark.py
 ```
 
 ## <a name="directory-structure"></a> Directory structure
@@ -105,6 +106,7 @@ Data sets should contain 2 subfolders: 'gold/' and 'samples/'. Gold should conta
 
 ### <a name="source_code"></a> Adding to Source Code
 This benchmark tool is designed with the intention of making it straightforward to add and remove summarizers and metrics.
+
 ### <a name="source_bp"></a> Big Picture
 There are a few key folders and files that you must interface with in order to add summarizers and metrics.
 
@@ -117,9 +119,22 @@ There are a few key folders and files that you must interface with in order to a
     - Some may need to interact with other programming languages. A wrapper interface can be used to handshake between python and those summarizers.
 
 #### Key Files:
-1. src/mappings.py
+1. src/benchmark.py
+    - Self-executing class that runs summarization and evaluations based on the settings specified in src/settings.ini
+2. src/mappings.py
     - Contains all the settings defaults and supported summarizers and metrics.
-
+3. src/summarizer_library.py
+    - Loads in summarizer libraries and wrappers.
+    - Contains function fetchSummarizers that expects a list of strings, that reference targeted summarizers. It returns a dictionary where the keys are the summarizer and the value is the class object for the summarizer you would like to use.
+4. src/evaluator_library.py
+    - Loads in metric tool libraries and wrappers.
+    - Contains function fetchEvaluators that expects a list of strings, that reference targeted evaluators. It returns a dictionary where the keys are the evaluator and the value is the class object for the evaluator you would like to use.
+5.  src/SummarizerSwitch.py
+    - Class that contains methods to call on summarizers.
+    - function toggleAndExecuteSummarizer()
+        - Inputs: summarizerKey(string), takes in a the key to a summarizer. text(string), string to summarize.
+        - Output: summarized text, summarized using the targeted summarizer.
+        - Maps summarizer to a wrapper method that reformats text and calls the library for that summarizer appropriately. Output of the wrapper method is returned to the caller of this function.
 
 ### <a name="summarizer_a"></a> Adding Summarizers
 
