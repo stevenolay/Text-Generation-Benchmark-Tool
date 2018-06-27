@@ -5,9 +5,10 @@
 - [Getting started](#getting-started)
   - [Cloning the repo](#cloning)
   - [Installing dependencies](#installing)
-  - [Testing](#testing)
-  - [Building](#building)
-  - [Running locally](#running)
+  - [Supported Summarizers](#supported_s)
+  - [Supported Metrics](#supported_m)
+  - [Settings](#settings)
+  - [Running](#running)
 - [Directory structure](#directory-structure)
 
 ## <a name="Requirements"></a> Requirements
@@ -18,8 +19,8 @@ The configuration file [`src/settings.ini`](src/settings.ini) contains parameter
 ## <a name="getting-started"></a> Getting started
 ### <a name="cloning"></a> Cloning the repo
 ```
-$ git clone https://github.com/Quibbl/quibbl-web-app.git
-$ cd quibbl-web-app
+$ git clone https://github.com/stevenolay/Summarization-Benchmark-Tool.git
+$ cd Summarization-Benchmark-Tool
 ```
 
 ### <a name="installing"></a> Installing dependencies
@@ -32,9 +33,29 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
     >>> import nltk
     >>> nltk.download('stopwords')
 ```
+### <a name="supported_s"></a> Supported Summarizers
+This application has default support for all of the SUMY summarizers.
+
+SUMY Edmonson Summarizers have weight attributes, null words, and stop words that have been hard set. If you would like to alter these values, which are hard set to the defaults present in the Edmunson Summarizer. Edit the weights in src/summarizer_source_files/sumy_wrapper.py . There are placeholders for all the parameters that can be changed to suit your needs.
+
+This application supports Adobe's Sedona and Recollect summarizers.
+
+This application also supports a stemmed TF rank summarizer called smmrRE made by Steven Layne.
+
+### <a name="supported_m"></a> Supported Metrics
+
+This application supports pyRouge* , rouge (a pure python implementation of ROUGE score), and METEOR.
+
+### <a name="settings"></a> Supported Metrics
+
+Refer to src/settings.ini for the avaialble settings. You can chain metrics and summarizers together by listing your desired summarizers and metrics in a comma seperated format (CASE INSENSITVE).
+
+### <a name="running"></a> Running Benchmark
+```
+$ python src/benchmark.py
+```
 
 ## <a name="directory-structure"></a> Directory structure
-
 ```
 .
 ├── README.md
@@ -52,7 +73,6 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
     ├── evaluator_source_files
     │   ├── Meteor
     │   │   ├── Meteor.py
-    │   │   ├── Meteor.pyc
     │   │   ├── __init__.py
     │   │   ├── data
     │   │   │   └── paraphrase-en.gz
