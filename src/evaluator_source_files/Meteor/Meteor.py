@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Python wrapper for METEOR implementation, by Xinlei Chen
+# Python wrapper for METEOR implementation, by Xinlei Chen, Adapted by Steven Layne
 # Acknowledge Michael Denkowski for the generous discussion and help
 
 import os
@@ -31,6 +31,10 @@ class Meteor:
         self.lock = threading.Lock()
 
     def sanitize(self, sourceString):
+        '''
+            input: string
+            output: string with new line chars removed
+        '''
         return sourceString.replace('\n', '')
 
     def score(self, hypothesis_str, reference_list):
