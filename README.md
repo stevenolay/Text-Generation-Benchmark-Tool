@@ -39,6 +39,7 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
     >>> import nltk
     >>> nltk.download('stopwords')
 ```
+
 ### <a name="supported_s"></a> Supported Summarizers
 This application has default support for all of the SUMY summarizers.
 
@@ -100,11 +101,24 @@ $ python src/benchmark.py
 Datasets are intended to be stored in data/ but you are able to provide comma seperated absolute and relative paths to datasets stored elsewhere in the src/settings.ini file under general -> data_sets. Note: Even datasets stored in data/ must be specified in the settings.ini. This version does not support autodetection of datasets.
 
 ### <a name="dataset_f"></a> Formatting Datasets
-Data sets should contain 2 subfolders. 'gold/' and 'samples/'. Gold should hold your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a `_gold` Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
+Data sets should contain 2 subfolders: 'gold/' and 'samples/'. Gold should contain your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a `_gold` Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
 
 ### <a name="source_code"></a> Adding to Source Code
-Interfacing with
+This benchmark tool is designed with the intention of making it straightforward to add and remove summarizers and metrics.
 ### <a name="source_bp"></a> Big Picture
+There are a few key folders and files that you must interface with in order to add summarizers and metrics.
+
+Key Folders:
+1.  src/summarizer_source_files
+    - Location where you should store your abstract interfaces(wrappers) for summarizers.
+    - Some summarizers may need to interact with other programming languages. A wrapper interface can be used to handshake between python and those summarizers.
+2.  src/evaluator_source_files
+    - Location where you should store your abstract interfaces(wrappers) for metrics.
+    - Some may need to interact with other programming languages. A wrapper interface can be used to handshake between python and those summarizers.
+
+Key Files:
+1. src/mappings.py
+    - Contains all the settings defaults and supported summarizers and metrics.
 
 
 ### <a name="summarizer_a"></a> Adding Summarizers
