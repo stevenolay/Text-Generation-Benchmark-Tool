@@ -36,17 +36,17 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
 ### <a name="supported_s"></a> Supported Summarizers
 This application has default support for all of the SUMY summarizers.
 
-SUMY Edmonson Summarizers have weight attributes, null words, and stop words that have been hard set. If you would like to alter these values, which are hard set to the defaults present in the Edmunson Summarizer. Edit the weights in src/summarizer_source_files/sumy_wrapper.py . There are placeholders for all the parameters that can be changed to suit your needs.
+SUMY Edmonson Summarizers have weight attributes, null words, and stop words that have been hard set. If you would like to alter these values, which are hard set to the defaults present in the Edmunson Summarizer, edit the values in src/summarizer_source_files/sumy_wrapper.py . There are placeholders for all the parameters that can be changed to suit your needs.
 
-This application supports Adobe's Sedona and Recollect summarizers.
+This application supports Adobe's Sedona and Recollect summarizers. Sedona and Recollect have paramaters that can be changed in the functions createRequestBody and createSedonaRequestBody in src/summarizer_source_files/Recollect.py and src/summarizer_source_files/Recollect.py respectively.
 
-This application also supports a stemmed TF rank summarizer called smmrRE made by Steven Layne.
+This application also supports a stemmed TF rank summarizer called smmrRE made by Steven Layne. It is a re-implementation of SMMRY as outlined here [SMMRY Algorithm Description](https://smmry.com/about)
 
 ### <a name="supported_m"></a> Supported Metrics
 
 This application supports pyRouge* , rouge (a pure python implementation of ROUGE score), and METEOR.
 
-### <a name="settings"></a> Supported Metrics
+### <a name="settings"></a> Settings
 
 Refer to src/settings.ini for the avaialble settings. You can chain metrics and summarizers together by listing your desired summarizers and metrics in a comma seperated format (CASE INSENSITVE).
 
