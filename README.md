@@ -12,8 +12,10 @@
 - [Directory structure](#directory-structure)
 - [Adding Datasets](#dataset)
     - [Formatting Datasets](#dataset_f)
-- [Adding Summarizers](#summarizer_a)
-- [Adding Metrics](#metrics_a)
+- [Adding to Source Code](#source_code)
+    - [Big Picture](#source_bp)
+    - [Adding Summarizers](#summarizer_a)
+    - [Adding Metrics](#metrics_a)
 
 ## <a name="Requirements"></a> Requirements
 The Summarization Benchmark Tool requires Python 3 or 2 and pip.
@@ -96,12 +98,16 @@ $ python src/benchmark.py
 ```
 ## <a name="dataset"></a> Adding Datasets
 Datasets are intended to be stored in data/ but you are able to provide comma seperated absolute and relative paths to datasets stored elsewhere in the src/settings.ini file under general -> data_sets. Note: Even datasets stored in data/ must be specified in the settings.ini. This version does not support autodetection of datasets.
+
 ### <a name="dataset_f"></a> Formatting Datasets
+Data sets should contain 2 subfolders. 'gold/' and 'samples/'. Gold should hold your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a `_gold` Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
 
-Data sets should contain 2 subfolders. 'gold/' and 'samples/'. Gold should hold your model examples and Samples should hold your target documents for summarization.
+### <a name="source_code"></a> Adding to Source Code
+Interfacing with
+### <a name="source_bp"></a> Big Picture
 
-Your corpora examples should be line seperated. Gold files should have the same name as the samples with a '_gold' suffix before the file extension. Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
-```
-```
-## <a name="dataset"></a> Adding Datasets
-Datasets are intended to be stored in data/ but you are able to provide comma seperated absolute and relative paths to datasets stored elsewhere in the src/settings.ini file under general -> data_sets. Note: Even datasets stored in data/ must be specified in the settings.ini. This version does not support autodetection of datasets.
+
+### <a name="summarizer_a"></a> Adding Summarizers
+
+
+### <a name="metrics_a"></a> Adding Metrics
