@@ -25,13 +25,12 @@ $ cd quibbl-web-app
 ### <a name="installing"></a> Installing dependencies
 ```
 $ pip install -r requirements.txt
-
+```
 Some summarizers require the NLTK tokenizer which has an extra build step:
 
-```ruby
+```python
     >>> import nltk
     >>> nltk.download('stopwords')
-
 ```
 
 ## <a name="directory-structure"></a> Directory structure
