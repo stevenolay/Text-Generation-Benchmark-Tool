@@ -28,10 +28,10 @@ $ pip install -r requirements.txt
 
 Some summarizers require the NLTK tokenizer which has an extra build step:
 
-```python
+```ruby
     >>> import nltk
     >>> nltk.download('stopwords')
-```
+
 ```
 
 ## <a name="directory-structure"></a> Directory structure
