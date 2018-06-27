@@ -1,27 +1,36 @@
 # Summarization Benchmark Tool
 
 ## Table of contents:
-- [Requierment](#Requirements)
+- [Requierments](#Requirements)
 - [Getting started](#getting-started)
   - [Cloning the repo](#cloning)
   - [Installing dependencies](#installing)
   - [Testing](#testing)
   - [Building](#building)
   - [Running locally](#running)
-- [Deploying](#deploying)
 - [Directory structure](#directory-structure)
-- [External stylesheets](#external-scss)
 
 ## <a name="Requirements"></a> Requirements
 The Summarization Benchmark Tool requires Python 3 or 2, as well as a few Python packages that you may install running pip install -r requirements.txt.
+
+The configuration file [`src/settings.ini`](src/settings.ini) contains parameters than can be altered. Options and explanations of these parameters are found inline.
+
+## <a name="getting-started"></a> Getting started
+### <a name="cloning"></a> Cloning the repo
+```
+$ git clone https://github.com/Quibbl/quibbl-web-app.git
+$ cd quibbl-web-app
+```
+
+### <a name="installing"></a> Installing dependencies
+```
+$ pip install -r requirements.txt
 
 Some summarizers require the NLTK tokenizer which has an extra build step:
 .. code-block:: python
     >>> import nltk
     >>> nltk.download('stopwords')
-
-
-The configuration file s [`src/settings.ini`](src/settings.ini) contains parameters than can be altered. Options and explanations of these parameters are found inline.
+```
 
 ## <a name="directory-structure"></a> Directory structure
 
