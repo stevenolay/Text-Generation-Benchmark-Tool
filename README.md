@@ -51,13 +51,15 @@ This application also supports a stemmed TF rank summarizer called smmrRE made b
 
 ### <a name="supported_m"></a> Supported Metrics
 
-This application supports pyRouge* , rouge (a pure python implementation of ROUGE score), and METEOR.
+This application supports pyRouge[1] , rouge (a pure python implementation of ROUGE score), and METEOR[2].
+
+[1] In order to use pyRouge you must have it preinstalled on your machine. pyRouge is a very tricky to setup.  [Refer to the pyRouge docs](https://github.com/bheinzerling/pyrouge) for installation instructions.
 
 ### <a name="settings"></a> Settings
 
 Refer to src/settings.ini for the available settings. You can run multiple metrics and summarizers by listing your desired summarizers and metrics in a comma seperated format (CASE INSENSITVE).
 
-### <a name="running"></a> Running Benchmark
+### <a name="running"></a> Running Benchmark Tool
 ```
 $ cd src
 $ python benchmark.py
