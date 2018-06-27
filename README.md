@@ -108,7 +108,7 @@ This benchmark tool is designed with the intention of making it straightforward 
 ### <a name="source_bp"></a> Big Picture
 There are a few key folders and files that you must interface with in order to add summarizers and metrics.
 
-Key Folders:
+#### Key Folders:
 1.  src/summarizer_source_files
     - Location where you should store your abstract interfaces(wrappers) for summarizers.
     - Some summarizers may need to interact with other programming languages. A wrapper interface can be used to handshake between python and those summarizers.
@@ -116,7 +116,7 @@ Key Folders:
     - Location where you should store your abstract interfaces(wrappers) for metrics.
     - Some may need to interact with other programming languages. A wrapper interface can be used to handshake between python and those summarizers.
 
-Key Files:
+#### Key Files:
 1. src/mappings.py
     - Contains all the settings defaults and supported summarizers and metrics.
 
