@@ -1,5 +1,5 @@
 # Summarization-Benchmark-Tool
-'''
+```
 .
 ├── README.md
 ├── data
@@ -33,4 +33,4 @@
     │   ├── smmrRE.py
     │   └── sumy_wrapper.py
     └── utils.py
-'''
+```
