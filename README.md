@@ -11,7 +11,7 @@
 - [Directory structure](#directory-structure)
 
 ## <a name="Requirements"></a> Requirements
-The Summarization Benchmark Tool requires Python 3 or 2, as well as a few Python packages that you may install running pip install -r requirements.txt.
+The Summarization Benchmark Tool requires Python 3 or 2 and pip.
 
 The configuration file [`src/settings.ini`](src/settings.ini) contains parameters than can be altered. Options and explanations of these parameters are found inline.
 
@@ -27,6 +27,7 @@ $ cd quibbl-web-app
 $ pip install -r requirements.txt
 
 Some summarizers require the NLTK tokenizer which has an extra build step:
+
 .. code-block:: python
     >>> import nltk
     >>> nltk.download('stopwords')
