@@ -1,5 +1,17 @@
 # Summarization Benchmark Tool
 
+## Table of contents:
+- [Requierment](#Requirements)
+- [Getting started](#getting-started)
+  - [Cloning the repo](#cloning)
+  - [Installing dependencies](#installing)
+  - [Testing](#testing)
+  - [Building](#building)
+  - [Running locally](#running)
+- [Deploying](#deploying)
+- [Directory structure](#directory-structure)
+- [External stylesheets](#external-scss)
+
 ## <a name="Requirements"></a> Requirements
 The Summarization Benchmark Tool requires Python 3 or 2, as well as a few Python packages that you may install running pip install -r requirements.txt.
 
@@ -10,18 +22,6 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
 
 
 The configuration file s [`src/settings.ini`](src/settings.ini) contains parameters than can be altered. Options and explanations of these parameters are found inline.
-
-## Table of contents:
-- [Requierment](#prerequisites)
-- [Getting started](#getting-started)
-  - [Cloning the repo](#cloning)
-  - [Installing dependencies](#installing)
-  - [Testing](#testing)
-  - [Building](#building)
-  - [Running locally](#running)
-- [Deploying](#deploying)
-- [Directory structure](#directory-structure)
-- [External stylesheets](#external-scss)
 
 ## <a name="directory-structure"></a> Directory structure
 
