@@ -54,6 +54,9 @@ This application also supports a stemmed TF rank summarizer called smmrRE made b
 This application supports pyRouge[1] , rouge (a pure python implementation of ROUGE score), and METEOR[2].
 
 [1] In order to use pyRouge you must have it preinstalled on your machine. pyRouge is a very tricky to setup.  [Refer to the pyRouge docs](https://github.com/bheinzerling/pyrouge) for installation instructions.
+[2] Meteor is included in this application. However, you must have the JAVA SDK installed on your machine and it is only configured for English. The Meteor installation directory is src/evaluator_source_files/Meteor. The language files are found at src/evaluator_source_files/Meteor/data.
+
+If you would like to add additional languages download Meteor 1.5 [here](http://www.cs.cmu.edu/~alavie/METEOR/download/meteor-1.5.tar.gz). Extract the contents and copy the language files located in the data/ folder to src/evaluator_source_files/Meteor/data.
 
 ### <a name="settings"></a> Settings
 
