@@ -2,6 +2,7 @@ import tempfile
 import contextlib
 import shutil
 import os
+import sys
 
 
 @contextlib.contextmanager
@@ -33,9 +34,23 @@ def file_len(fname):
     return i + 1
 
 
+def get_script_path():
+    return os.path.dirname(os.path.realpath(sys.argv[0]))
+
+
 def create_folder_if_not_exists(directory):
     '''
     Create the folder if it doesn't exist already.
     '''
     if not os.path.exists(directory):
         os.makedirs(directory)
+
+def list_files(dir):
+    r = []
+    subdirs = [x[0] for x in os.walk(dir)]
+    for subdir in subdirs:
+        files = os.walk(subdir).next()[2]
+        if (len(files) > 0):
+            for file in files:
+                r.append(subdir + "/" + file)
+    return r
