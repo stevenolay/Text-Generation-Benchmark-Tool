@@ -28,6 +28,8 @@ from mappings import (
     DEFAULT_SENTENCE_COUNT
 )
 
+from duc_parser import OrderDUC2004
+
 import logging
 
 FORMAT = '%(asctime)-15s %(message)s'
@@ -36,6 +38,11 @@ logging.basicConfig(format=FORMAT,
                     level=logging.DEBUG,
                     filename=LOG_FILENAME)
 LOGGER = logging.getLogger()
+
+dirname, filename = os.path.split(os.path.abspath(__file__))
+os.chdir(dirname)  # Change the current working directory
+# to the directory of the script. All file loads are relative
+# to the script directory.
 
 try:  # Used for Python 2 compatibility
     import sys
@@ -54,6 +61,16 @@ class benchmark:
             'data_folders',
             expect_list=True
         )
+
+        ducEnabled = self.fetchSettingByKey('DUC')
+        evaluationEnabled = self.evaluateBoolean(ducEnabled)
+        self.ducEnabled = ducEnabled if ducEnabled \
+            else False
+
+        if self.ducEnabled:
+            OrderDUC2004()
+            self.data_folders.append('../data/DUC')
+
         self.subsetsEnabled = False
         # Load Seperators
         textSeperator = self.fetchSeperator('text_seperator')
@@ -307,19 +324,22 @@ class benchmark:
             self.runEvaluations()
 
     def runEvaluations(self):
+        corporaReports = []
         for dataSet in self.dataSetToCorpusFilesMap:
-            self.evaluateDataSet(dataSet)
+            corpusReports = self.evaluateDataSet(dataSet)
+            corporaReports.extend(corpusReports)
+        print(''.join(corporaReports))
 
     def evaluateDataSet(self, dataset):
         corpusFilePaths = self.dataSetToCorpusFilesMap[dataset]
-        corpusReports = ['Report for Dataset:\t{0}\n'.format(dataset)]
+        corpusReports = ['\nReport for Dataset:\t{0}\n'.format(dataset)]
         for corpus in corpusFilePaths:
             corpusReports.append(
-                '\n\tReporting for Corpus: {0}\n'.format(corpus)
+                '\n\tReporting for Corpus: {0}'.format(corpus)
             )
             report = self.evaluateCorpusPerSummarizer(corpus)
             corpusReports.extend(['\n\t\t', report])
-        print(''.join(corpusReports))
+        return corpusReports
 
     def evaluateCorpusPerSummarizer(self, corpusFilepath):
         goldPath = self.generateCorpusGoldFilePath(corpusFilepath)
