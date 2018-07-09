@@ -14,12 +14,12 @@ def TemporaryDirectory(*args, **kwargs):
         shutil.rmtree(d)
 
 
-def file_len_open(f):
+def fileLenOpen(f):
     fname = f.name
-    return file_len(fname)
+    return fileLen(fname)
 
 
-def file_len(fname):
+def fileLen(fname):
     '''
         Calculates the line count for a given file line by line to prevent
          loading lines into memory all at once.
@@ -45,7 +45,8 @@ def create_folder_if_not_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def list_files(dir):
+
+def listFilesInDir(dir):
     r = []
     subdirs = [x[0] for x in os.walk(dir)]
     for subdir in subdirs:

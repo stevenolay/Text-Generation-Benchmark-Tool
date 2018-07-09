@@ -2,10 +2,11 @@ import os
 import codecs
 
 from tqdm import tqdm
+
 from utils import (
     TemporaryDirectory,
-    file_len_open,
-    file_len
+    fileLen,
+    fileLenOpen
 )
 
 import logging
@@ -56,7 +57,7 @@ class EvaluatorSwitch(object):
 
         meteor = self.evaluation_library['meteor']
 
-        goldFileLength = file_len_open(goldExamples)
+        goldFileLength = fileLenOpen(goldExamples)
         numSamples = 0
         sumScores = 0.0
         for i in tqdm(range(goldFileLength)):
@@ -94,7 +95,7 @@ class EvaluatorSwitch(object):
         sumRouge2 = {'r': 0.0, 'p': 0.0, 'f': 0.0}
         sumRougel = {'r': 0.0, 'p': 0.0, 'f': 0.0}
 
-        goldFileLength = file_len_open(goldExamples)
+        goldFileLength = fileLenOpen(goldExamples)
         numSamples = 0
         for i in tqdm(range(goldFileLength)):
             goldExample = goldExamples.readline()
@@ -139,7 +140,7 @@ class EvaluatorSwitch(object):
         Rouge155 = self.evaluation_library['pyrouge']
         output = ''
 
-        goldFileLength = file_len(goldExamples.name)
+        goldFileLength = fileLen(goldExamples.name)
 
         if len(failures) == goldFileLength:
             # No summaries were successful

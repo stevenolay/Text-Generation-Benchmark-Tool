@@ -5,27 +5,30 @@ import codecs
 from collections import OrderedDict, defaultdict
 from utils import (
     TemporaryDirectory,
-    list_files
+    listFilesInDir
 )
 
 
 class OrderDUC2004:
-    def __init__(self):
-        with TemporaryDirectory() as temp_dir:
-            self.modelDirectory = self.initializeModelDirectory(temp_dir)
-            self.samplesDirectory = self.initializeSamplesDirectory(temp_dir)
+    def __init__(self, ducFolderPath):
+        self.ducFolderPath = ducFolderPath
+        with TemporaryDirectory() as tempDir:
+            self.modelDirectory = self.initializeModelDirectory(tempDir)
+            self.samplesDirectory = self.initializeSamplesDirectory(tempDir)
 
             self.docIndexMap = OrderedDict()
 
             self.processDocs()
             self.processModels()
 
-    def initializeSamplesDirectory(self, temp_dir):
+    def initializeSamplesDirectory(self, tempDir):
         # INIT Samples
-        samples_dir = os.path.join(temp_dir, 'samples')
-        os.makedirs(samples_dir)
-        DUCSamplesFolderPath = "../data/DUC/DUC2004_" \
-            "Summarization_Documents.tgz"
+        samplesDir = os.path.join(tempDir, 'samples')
+
+        os.makedirs(samplesDir)
+        DUCSamplesFolderPath = os.path.join(
+            self.ducFolderPath,
+            "DUC2004_Summarization_Documents.tgz")
 
         with tarfile.open(DUCSamplesFolderPath) as samplesFiles:
             targetedSamples = [
@@ -35,39 +38,41 @@ class OrderDUC2004:
                     "tasks1and2/duc2004_tasks1and2_docs/docs"
                 )
             ]
-            samplesFiles.extractall(members=targetedSamples, path=samples_dir)
+            samplesFiles.extractall(members=targetedSamples, path=samplesDir)
 
-        return samples_dir
+        return samplesDir
 
-    def initializeModelDirectory(self, temp_dir):
+    def initializeModelDirectory(self, tempDir):
         # INIT Models
-        model_dir = os.path.join(temp_dir, 'model')
-        os.makedirs(model_dir)
-        DUCResultsFolderPath = "../data/DUC/duc2004_results.tar"
+        modelDir = os.path.join(tempDir, 'model')
+        os.makedirs(modelDir)
+        DUCResultsFolderPath = os.path.join(
+            self.ducFolderPath,
+            "duc2004_results.tar")
+
         with tarfile.open(DUCResultsFolderPath) as resultsFiles:
             targetedModels = [
                 tarinfo for tarinfo in resultsFiles.getmembers()
                 if tarinfo.name.startswith(
                     "duc2004_results/ROUGE/"
-                    "duc2004.task1.ROUGE.models.tar.gz"
-                )
+                    "duc2004.task1.ROUGE.models.tar.gz")
             ]
 
-            resultsFiles.extractall(members=targetedModels, path=model_dir)
+            resultsFiles.extractall(members=targetedModels, path=modelDir)
 
         modelTarPath = os.path.join(
-            model_dir,
+            modelDir,
             'duc2004_results/ROUGE/duc2004.task1.ROUGE.models.tar.gz')
 
         with tarfile.open(modelTarPath) as modelDocs:
-            subdir_and_files = [
+            subdirAndFiles = [
                 tarinfo for tarinfo in modelDocs.getmembers()
                 if tarinfo.name.startswith("./eval")
             ]
 
-            modelDocs.extractall(members=subdir_and_files, path=model_dir)
+            modelDocs.extractall(members=subdirAndFiles, path=modelDir)
 
-        return model_dir
+        return modelDir
 
     def makeDir(self, directoryPath):
         try:
@@ -76,14 +81,13 @@ class OrderDUC2004:
             pass
 
     def processDocs(self):
-        files = list_files(self.samplesDirectory)
+        files = listFilesInDir(self.samplesDirectory)
         indexMap = self.docIndexMap
+        ducSampleFolderPath = os.path.join(self.ducFolderPath, 'samples')
+        self.makeDir(ducSampleFolderPath)
 
-        self.makeDir('../data/DUC/samples')
-
-        with codecs.open(
-            '../data/DUC/samples/DUC-2004.txt', 'w', 'utf-8'
-        ) as combo:
+        sampleFolderPath = os.path.join(ducSampleFolderPath, 'DUC-2004.txt')
+        with codecs.open(sampleFolderPath, 'w', 'utf-8') as combo:
             index = 0
             if not files:
                 return
@@ -121,7 +125,7 @@ class OrderDUC2004:
 
     def mapModelsToCommonIdentifier(self):
         modelDirectory = os.path.join(self.modelDirectory, 'eval')
-        modelFiles = list_files(modelDirectory)
+        modelFiles = listFilesInDir(modelDirectory)
 
         modelIndetifierMap = defaultdict(list)
         for file in modelFiles:
@@ -136,12 +140,11 @@ class OrderDUC2004:
         fileIdentifierMap = self.mapModelsToCommonIdentifier()
         assert len(lineMap.keys()) == len(fileIdentifierMap.keys())
         # expect to be the same length
+        ducGoldFolderPath = os.path.join(self.ducFolderPath, 'gold')
+        self.makeDir(ducGoldFolderPath)
 
-        self.makeDir('../data/DUC/gold')
-
-        with codecs.open(
-            '../data/DUC/gold/DUC-2004_gold.txt', 'w', 'utf-8'
-        ) as combo:
+        goldFolderPath = os.path.join(ducGoldFolderPath, 'DUC-2004_gold.txt')
+        with codecs.open(goldFolderPath, 'w', 'utf-8') as combo:
             if not lineMap:
                 return
 

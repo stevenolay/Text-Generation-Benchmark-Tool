@@ -1,4 +1,4 @@
-from summarizer_library import sumyKeys as SUMY_KEYS
+from SummarizerLibrary import sumyKeys as SUMY_KEYS
 import logging
 
 FORMAT = '%(asctime)-15s %(message)s'
@@ -10,7 +10,7 @@ LOGGER = logging.getLogger()
 class SummarizerSwitch(object):
     def __init__(self, benchmarkInstance):
         self.benchmark = benchmarkInstance
-        self.summarizer_library = benchmarkInstance.summarizer_library
+        self.summarizerLibrary = benchmarkInstance.summarizerLibrary
 
         sumyKeys = SUMY_KEYS
         sumyFunctionMap = {k: self.sumySwap(k) for k in sumyKeys}
@@ -58,10 +58,10 @@ class SummarizerSwitch(object):
         numSentences = benchmark.sentenceCount
 
         if benchmark.preTokenized:
-            # smmrRE expects text to not be pretokenized
+            # recollect expects text to not be pretokenized
             text = self.joinTokenizedSentences(text)
 
-        RecollectClass = self.summarizer_library['recollect']
+        RecollectClass = self.summarizerLibrary['recollect']
         LANGUAGE = 'en'
         recollect = RecollectClass(LANGUAGE)
 
@@ -74,10 +74,10 @@ class SummarizerSwitch(object):
         numSentences = benchmark.sentenceCount
 
         if benchmark.preTokenized:
-            # smmrRE expects text to not be pretokenized
+            # sedona expects text to not be pretokenized
             text = self.joinTokenizedSentences(text)
 
-        SedonaClass = self.summarizer_library['sedona']
+        SedonaClass = self.summarizerLibrary['sedona']
         sedona = SedonaClass()
 
         summary = sedona.summarize(text, numSentences)
@@ -92,7 +92,7 @@ class SummarizerSwitch(object):
             # smmrRE expects text to not be pretokenized
             text = self.joinTokenizedSentences(text)
 
-        smmrREClass = self.summarizer_library['smmrre']
+        smmrREClass = self.summarizerLibrary['smmrre']
         smmrRE = smmrREClass(text)
 
         summary = smmrRE.summarize(numSentences)
@@ -108,7 +108,7 @@ class SummarizerSwitch(object):
                 # sumy has it's own tokenizer
                 text = self.joinTokenizedSentences(text)
 
-            summarizer = self.summarizer_library[sumyMethodKey]
+            summarizer = self.summarizerLibrary[sumyMethodKey]
             summary = summarizer(text, numSentences, 'english')
 
             return summary

@@ -3,15 +3,15 @@ import json
 import glob
 import os
 import codecs
-
-
 from tqdm import tqdm
+
 from utils import (
-    file_len,
+    fileLen,
     create_folder_if_not_exists
 )
-from summarizer_library import fetchSummarizers
-from evaluator_library import fetchEvaluators
+
+from SummarizerLibrary import fetchSummarizers
+from EvaluatorLibrary import fetchEvaluators
 
 from collections import defaultdict
 
@@ -28,7 +28,7 @@ from mappings import (
     DEFAULT_SENTENCE_COUNT
 )
 
-from duc_parser import OrderDUC2004
+from DUCParser import OrderDUC2004
 
 import logging
 
@@ -47,7 +47,7 @@ os.chdir(dirname)  # Change the current working directory
 try:  # Used for Python 2 compatibility
     import sys
     reload(sys)
-    sys.setdefaultencoding("utf-8")
+    sys.setdefaultencoding('utf-8')
 except NameError:
     pass
 
@@ -57,7 +57,7 @@ class benchmark:
         # Load configuration File
         self.settings = self.initSettings()
 
-        self.data_folders = self.fetchSettingByKey(
+        self.dataFolders = self.fetchSettingByKey(
             'data_folders',
             expect_list=True
         )
@@ -67,9 +67,13 @@ class benchmark:
         self.ducEnabled = ducEnabled if ducEnabled \
             else False
 
+        self.ducDataFolder = self.fetchSettingByKey('DUC_data_folder')
+        self.ducDataFolder = self.ducDataFolder if self.ducDataFolder \
+            else '../data/DUC'
+
         if self.ducEnabled:
-            OrderDUC2004()
-            self.data_folders.append('../data/DUC')
+            OrderDUC2004(self.ducDataFolder)
+            self.dataFolders.append(self.ducDataFolder)
 
         self.subsetsEnabled = False
         # Load Seperators
@@ -124,7 +128,7 @@ class benchmark:
         self.preTokenized = preTokenized if preTokenized else False
 
         # load summarizers
-        self.summarizer_library = fetchSummarizers(summarizers)
+        self.summarizerLibrary = fetchSummarizers(summarizers)
         self.summarizerSwitch = SummarizerSwitch(self)
 
         # load evaluators
@@ -152,24 +156,24 @@ class benchmark:
         self.corpusToSummaryMap = defaultdict(dict)
 
     def walkDataCorporaFolders(self):
-        dataFolders = self.data_folders
+        dataFolders = self.dataFolders
 
-        corpora_filepaths = []  # Flat List of All avaialble corpora
+        corporaFilepaths = []  # Flat List of All avaialble corpora
 
         dataSetToCorpusFilesMap = {}   # Keeps track of which samples
         # belong to which datasets
         for folder in dataFolders:
             filesInFolder = glob.glob(
                 str(os.path.join(folder, 'samples', '*')))
-            corpora_filepaths.extend(filesInFolder)
+            corporaFilepaths.extend(filesInFolder)
             dataSetToCorpusFilesMap[folder] = filesInFolder
 
-        return corpora_filepaths, dataSetToCorpusFilesMap
+        return corporaFilepaths, dataSetToCorpusFilesMap
 
     def initSettings(self):
         settings = configparser.ConfigParser()
-        settings_filepath = './settings.ini'
-        settings.read(settings_filepath)
+        settingsFilepath = './settings.ini'
+        settings.read(settingsFilepath)
         return settings
 
     def validateOption(self, suppliedOption, validOptionsSet):
@@ -264,7 +268,7 @@ class benchmark:
         summarizerSwitch = self.summarizerSwitch
 
         failedIndicies = set()
-        fileLength = file_len(corpusFilePath)
+        fileLength = fileLen(corpusFilePath)
         results = codecs.open(generatedSummariesFilePath, 'w', 'utf-8')
         samples = codecs.open(corpusFilePath, 'rb+', 'utf-8')
 
@@ -315,7 +319,7 @@ class benchmark:
         return corpusGoldFilePath
 
     def runBenchmarking(self):
-        summarizerLibrary = self.summarizer_library
+        summarizerLibrary = self.summarizerLibrary
 
         for key in summarizerLibrary:
             self.runSummarizations(key)
@@ -409,7 +413,7 @@ class benchmark:
             corpusFilepath, summarizerKey)
 
         goldSet = codecs.open(goldPath, 'r', 'utf-8')
-        fileLength = file_len(goldPath)
+        fileLength = fileLen(goldPath)
         goldSubset = codecs.open(goldSubsetFilePath, 'w', 'utf-8')
 
         for index, text in tqdm(enumerate(goldSet), total=fileLength):
