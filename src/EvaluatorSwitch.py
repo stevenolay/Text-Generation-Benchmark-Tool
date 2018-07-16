@@ -1,6 +1,8 @@
 import os
 import codecs
 
+from EvaluatorLibrary import fetchEvaluators
+
 from tqdm import tqdm
 
 from utils import (
@@ -18,8 +20,8 @@ LOGGER = logging.getLogger()
 
 
 class EvaluatorSwitch(object):
-    def __init__(self, benchmarkInstance):
-        self.evaluation_library = benchmarkInstance.evaluation_library
+    def __init__(self, evaluators):
+        self.evaluationLibrary = fetchEvaluators(evaluators)
         self.functionMap = {
             'rouge': self.rougeScore,
             'pyrouge': self.pyRouge,
@@ -29,7 +31,7 @@ class EvaluatorSwitch(object):
     def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples,
                                            failures):
         evaluatorReportsForCorpus = []
-        for evaluator in self.evaluation_library:
+        for evaluator in self.evaluationLibrary:
             report = self.toggleAndExecuteEvaluator(
                 evaluator, summaries, goldExamples, failures)
 
@@ -55,7 +57,7 @@ class EvaluatorSwitch(object):
     def meteor(self, summaries, goldExamples, failures):
         LOGGER.info('Calculating Meteor Score:')
 
-        meteor = self.evaluation_library['meteor']
+        meteor = self.evaluationLibrary['meteor']
 
         goldFileLength = fileLenOpen(goldExamples)
         numSamples = 0
@@ -89,7 +91,7 @@ class EvaluatorSwitch(object):
     def rougeScore(self, summaries, goldExamples, failures):
         LOGGER.info('Calculating Rouge Score:')
 
-        rouge = self.evaluation_library['rouge']
+        rouge = self.evaluationLibrary['rouge']
 
         sumRouge1 = {'r': 0.0, 'p': 0.0, 'f': 0.0}
         sumRouge2 = {'r': 0.0, 'p': 0.0, 'f': 0.0}
@@ -137,7 +139,7 @@ class EvaluatorSwitch(object):
 
     def pyRouge(self, summaries, goldExamples, failures):
         LOGGER.info('Calculating pyRouge score:')
-        Rouge155 = self.evaluation_library['pyrouge']
+        Rouge155 = self.evaluationLibrary['pyrouge']
         output = ''
 
         goldFileLength = fileLen(goldExamples.name)
