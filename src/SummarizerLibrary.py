@@ -19,7 +19,10 @@ def fetchSummarizers(enabledSummarizers):
         'recollect': Recollect
     }
 
-    sumySummarizers = {k: sumyWrap.summarize(k) for k in sumyKeys}
+    sumySummarizers = {
+        k: sumyWrap.summarize(k)
+        for k in sumyKeys
+    }
 
     SUMMARIZERS.update(sumySummarizers)
 
