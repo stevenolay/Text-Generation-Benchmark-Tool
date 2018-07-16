@@ -13,7 +13,10 @@ class SummarizerSwitch(object):
         self.summarizerLibrary = benchmarkInstance.summarizerLibrary
 
         sumyKeys = SUMY_KEYS
-        sumyFunctionMap = {k: self.sumySwap(k) for k in sumyKeys}
+        sumyFunctionMap = {
+            k: self.sumySwap(k)
+            for k in sumyKeys
+        }
 
         self.functionMap = {
             'smmrre': self.smmrre,
@@ -45,7 +48,7 @@ class SummarizerSwitch(object):
                 # Method should return a summary
                 summary = method(text)
             except Exception as err:
-                # Failed summariesare logged so they can be investigated.
+                # Failed summaries are logged so they can be investigated.
                 LOGGER.error(str(err))
 
             return summary
