@@ -7,11 +7,10 @@ from tqdm import tqdm
 
 from utils import (
     fileLen,
-    create_folder_if_not_exists
+    createFolderIfNotExists
 )
 
 from SummarizerLibrary import fetchSummarizers
-from EvaluatorLibrary import fetchEvaluators
 
 from collections import defaultdict
 
@@ -27,8 +26,6 @@ from mappings import (
     DEFAULT_SENTENCE_SEPERATOR,
     DEFAULT_SENTENCE_COUNT
 )
-
-from DUCParser import OrderDUC2004
 
 import logging
 
@@ -54,6 +51,10 @@ except NameError:
 
 class benchmark:
     def __init__(self):
+        # Generate Benchmark Tool Folders
+        createFolderIfNotExists(
+            os.path.join('..', 'data', 'generated_summaries'))
+
         # Load configuration File
         self.settings = self.initSettings()
 
@@ -61,19 +62,6 @@ class benchmark:
             'data_folders',
             expect_list=True
         )
-
-        ducEnabled = self.fetchSettingByKey('DUC')
-        evaluationEnabled = self.evaluateBoolean(ducEnabled)
-        self.ducEnabled = ducEnabled if ducEnabled \
-            else False
-
-        self.ducDataFolder = self.fetchSettingByKey('DUC_data_folder')
-        self.ducDataFolder = self.ducDataFolder if self.ducDataFolder \
-            else '../data/DUC'
-
-        if self.ducEnabled:
-            OrderDUC2004(self.ducDataFolder)
-            self.dataFolders.append(self.ducDataFolder)
 
         self.subsetsEnabled = False
         # Load Seperators
@@ -86,7 +74,7 @@ class benchmark:
             else DEFAULT_SENTENCE_SEPERATOR
 
         # load filepaths of samples
-        self.corpus_filepaths, self.dataSetToCorpusFilesMap = \
+        self.corpusFilepaths, self.dataSetToCorpusFilesMap = \
             self.walkDataCorporaFolders()
 
         # Load Summarizers
@@ -132,9 +120,7 @@ class benchmark:
         self.summarizerSwitch = SummarizerSwitch(self)
 
         # load evaluators
-        self.evaluation_library = fetchEvaluators(evaluators)
-
-        self.evaluatorSwitch = EvaluatorSwitch(self)
+        self.evaluatorSwitch = EvaluatorSwitch(evaluators)
 
         sentenceCount = self.fetchSettingByKey('sentence_count')
         self.sentenceCount = int(sentenceCount) if sentenceCount \
@@ -143,7 +129,7 @@ class benchmark:
         self.failedIndicies = defaultdict(dict)  # Dict of sampleFilePaths
         # And the indices unsuccesfully summarized, grouped by summarizer
         # This is used for evaluations. If the summarization of a specific
-        # set of text fails it will not have an hypothesis. So it cannot be
+        # set of text fails it will not have a hypothesis. So it cannot be
         # evaluated. This is how we know which indices to skip.
         '''
             {
@@ -160,7 +146,7 @@ class benchmark:
 
         corporaFilepaths = []  # Flat List of All avaialble corpora
 
-        dataSetToCorpusFilesMap = {}   # Keeps track of which samples
+        dataSetToCorpusFilesMap = {}   # Keeps track of which corpora
         # belong to which datasets
         for folder in dataFolders:
             filesInFolder = glob.glob(
@@ -244,11 +230,15 @@ class benchmark:
         return decodedSeperator
 
     def runSummarizations(self, summarizerKey):
-        corpusFilePaths = self.corpus_filepaths
+        corpusFilePaths = self.corpusFilepaths
         for filepath in corpusFilePaths:
             self.runSummarizationsForCorpus(filepath, summarizerKey)
 
     def generateSummaryFilePath(self, corpusFilePath, summarizerKey):
+        '''
+            input: filepath to corpus and summarizer
+            output: filepath for generated summary.
+        '''
 
         corpusFileName = os.path.basename(corpusFilePath)
 
@@ -305,6 +295,10 @@ class benchmark:
             generatedSummariesFilePath
 
     def generateCorpusGoldFilePath(self, corpusFilePath):
+        '''
+            input: path to corpus within a dataset
+            output: path to gold(models) for the corpus
+        '''
         corpusFileFolder, corpusFileName = os.path.split(corpusFilePath)
         dataSetFileFolder, subDir = os.path.split(corpusFileFolder)
         fileName, ext = os.path.splitext(corpusFileName)
@@ -365,26 +359,6 @@ class benchmark:
             summaries = codecs.open(summaryPath, 'r', 'utf-8')
 
             corpusReport = ''
-            '''
-            if self.subsetsEnabled:
-                self.generateGoldSubset(
-                    goldPath, corpusFilepath, summarizerKey)
-
-                goldSubsetFilePath = self.generateGoldSubsetFilePath(
-                    corpusFilepath, summarizerKey)
-
-                goldSubset = codecs.open(goldSubsetFilePath, 'r', 'utf-8')
-
-                failedIndicies = set()  # Set the failedIndices to an empty set
-                # no need to skip any summaries as a subset was fully
-                # constructed.
-                corpusReport = self.evaluatorSwitch\
-                    .executeAndReportEvaluatorsOnCorpus(
-                        summaries, goldSubset, failedIndicies
-                    )
-                goldSubset.close()
-            else:
-            '''
             goldExamples = codecs.open(goldPath, 'r', 'utf-8')
             failedIndicies = self.\
                 failedIndicies[summarizerKey.lower()][corpusFilepath]
@@ -425,7 +399,7 @@ class benchmark:
                 continue
 
             if index < (fileLength - 1):
-                goldSubset.write('{0}'.format(text))
+                goldSubset.write('\n{0}'.format(text))
             else:
                 goldSubset.write('{0}'.format(text))
         goldSet.close()
@@ -441,9 +415,6 @@ class benchmark:
                 summarizerKey.lower(), fileName, ext)
         )
         return goldSubsetFilePath
-
-
-create_folder_if_not_exists(os.path.join('..', 'data', 'generated_summaries'))
 
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()
