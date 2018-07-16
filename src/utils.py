@@ -38,7 +38,7 @@ def get_script_path():
     return os.path.dirname(os.path.realpath(sys.argv[0]))
 
 
-def create_folder_if_not_exists(directory):
+def createFolderIfNotExists(directory):
     '''
     Create the folder if it doesn't exist already.
     '''
