@@ -12,6 +12,20 @@ sumyKeys = [
 
 
 def fetchSummarizers(enabledSummarizers):
+    '''
+        input: list of summarizer keys
+        output: dict(
+                    summarizerKey: summarizerMethod
+                                 (None if no method is specified))
+        purpose: Onload of summarizer switch the output of this function
+        is provided to prevent cluttering the file with library
+        imports. The output dictionary can be interfaced to
+        fetch the summarizer function desired.
+
+        If no library is specified this will return a None type.
+        It is then the responsibility of the user to load their library in
+        presumably directly in the SummarizerSwitch.
+    '''
     sumyWrap = sumyWrapper()
     SUMMARIZERS = {
         'smmrre': smmrRE,
@@ -32,8 +46,8 @@ def fetchSummarizers(enabledSummarizers):
 
     desiredSummarizers = dict(
         (k.lower(), SUMMARIZERS[k])
+        if k in SUMMARIZERS else (k, None)
         for k in enabledSummarizers
-        if k in SUMMARIZERS
     )
 
     return desiredSummarizers
