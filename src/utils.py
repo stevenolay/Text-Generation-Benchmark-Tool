@@ -46,6 +46,10 @@ def createFolderIfNotExists(directory):
         os.makedirs(directory)
 
 
+def fileExists(directory):
+    return os.path.exists(directory)
+
+
 def listFilesInDir(dir):
     r = []
     subdirs = [x[0] for x in os.walk(dir)]
