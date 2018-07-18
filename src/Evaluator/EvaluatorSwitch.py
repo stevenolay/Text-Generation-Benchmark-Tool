@@ -1,7 +1,7 @@
 import os
 import codecs
 
-from EvaluatorLibrary import fetchEvaluators
+from .EvaluatorLibrary import fetchEvaluators
 
 from tqdm import tqdm
 

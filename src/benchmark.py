@@ -12,12 +12,12 @@ from utils import (
     fileExists
 )
 
-from SummarizerLibrary import fetchSummarizers
-
 from collections import defaultdict
 
-from SummarizerSwitch import SummarizerSwitch
-from EvaluatorSwitch import EvaluatorSwitch
+from Summarizer.SummarizerLibrary import fetchSummarizers
+from Summarizer.SummarizerSwitch import SummarizerSwitch
+
+from Evaluator.EvaluatorSwitch import EvaluatorSwitch
 
 from mappings import (
     SUPPORTED_EVAL_SYSTEMS,

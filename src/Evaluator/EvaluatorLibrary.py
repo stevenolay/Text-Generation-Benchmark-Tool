@@ -1,6 +1,6 @@
 from rouge import Rouge
 from pyrouge import Rouge155
-from evaluator_source_files.Meteor.Meteor import Meteor
+from .evaluator_source_files.Meteor.Meteor import Meteor
 
 
 def fetchEvaluators(enabledEvaluators):

@@ -1,4 +1,4 @@
-from SummarizerLibrary import sumyKeys as SUMY_KEYS
+from .SummarizerLibrary import sumyKeys as SUMY_KEYS
 import logging
 
 FORMAT = '%(asctime)-15s %(message)s'
