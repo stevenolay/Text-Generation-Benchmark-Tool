@@ -28,56 +28,42 @@ class EvaluatorSwitch(object):
             'meteor': self.meteor
         }
 
-    def executeAndReportEvaluatorsOnCorpus(self, summaries, goldExamples,
-                                           failures):
+    def executeAndReportEvaluatorsOnCorpus(self, SRO):
         evaluatorReportsForCorpus = []
         for evaluator in self.evaluationLibrary:
             report = self.toggleAndExecuteEvaluator(
-                evaluator, summaries, goldExamples, failures)
-
-            summaries.seek(0)
-            goldExamples.seek(0)
+                evaluator, SRO.copy())
 
             evaluatorReportsForCorpus.extend(report)
 
         return ''.join(evaluatorReportsForCorpus)
 
-    def toggleAndExecuteEvaluator(self, evaluatorKey,
-                                  summaries, goldExamples, failures):
+    def toggleAndExecuteEvaluator(self, evaluatorKey, SRO):
         functions = self.functionMap
 
         if evaluatorKey in functions:
             method = functions[evaluatorKey]
-            report = method(summaries, goldExamples, failures)
+            report = method(SRO)
             return report
 
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
-    def meteor(self, summaries, goldExamples, failures):
+    def meteor(self, SRO):
         LOGGER.info('Calculating Meteor Score:')
 
         meteor = self.evaluationLibrary['meteor']
 
-        goldFileLength = fileLenOpen(goldExamples)
+        readerLength = SRO.length
         numSamples = 0
         sumScores = 0.0
-        for i in tqdm(range(goldFileLength)):
-            goldExample = goldExamples.readline().rstrip('\n')
-            if numSamples in failures:
-                # If the summary failed we skip to the next gold example
-                continue
-            summary = summaries.readline().rstrip('\n')  # Only proceed
-            # the summary read if the current sample count did not fail.
+        for i in tqdm(range(readerLength)):
+            hypothesis, references = SRO.readOne()
+            score = meteor.score(hypothesis, references)
 
-            sampleHypothesisText = summary
-            goldText = goldExample
-
-            score = meteor.score(sampleHypothesisText, [goldText])
             sumScores += score
-
             numSamples += 1
-        print(numSamples)
+
         avg = float(sumScores) / float(numSamples)
 
         report = [
@@ -88,7 +74,7 @@ class EvaluatorSwitch(object):
 
         return report
 
-    def rougeScore(self, summaries, goldExamples, failures):
+    def rougeScore(self, SRO):
         LOGGER.info('Calculating Rouge Score:')
 
         rouge = self.evaluationLibrary['rouge']
@@ -97,28 +83,20 @@ class EvaluatorSwitch(object):
         sumRouge2 = {'r': 0.0, 'p': 0.0, 'f': 0.0}
         sumRougel = {'r': 0.0, 'p': 0.0, 'f': 0.0}
 
-        goldFileLength = fileLenOpen(goldExamples)
+        readerLength = SRO.length
         numSamples = 0
-        for i in tqdm(range(goldFileLength)):
-            goldExample = goldExamples.readline()
-            if numSamples in failures:
-                # If the summary failed we skip to the next gold example
-                continue
-            summary = summaries.readline()  # Only proceed the summary read
-            # if the current sample count did not fail.
+        for i in tqdm(range(readerLength)):
+            hypothesis, references = SRO.readOne()
+            for reference in references:
+                score = rouge.get_scores(hypothesis, reference)[0]
+                sumRouge1 = {k: sumRouge1[k] + score['rouge-1'][k]
+                             for k in sumRouge1}
+                sumRouge2 = {k: sumRouge2[k] + score['rouge-2'][k]
+                             for k in sumRouge2}
+                sumRougel = {k: sumRougel[k] + score['rouge-l'][k]
+                             for k in sumRougel}
 
-            sampleHypothesisText = summary
-            goldText = goldExample
-
-            score = rouge.get_scores(sampleHypothesisText, goldText)[0]
-            sumRouge1 = {k: sumRouge1[k] + score['rouge-1'][k]
-                         for k in sumRouge1}
-            sumRouge2 = {k: sumRouge2[k] + score['rouge-2'][k]
-                         for k in sumRouge2}
-            sumRougel = {k: sumRougel[k] + score['rouge-l'][k]
-                         for k in sumRougel}
-
-            numSamples += 1
+                numSamples += 1
 
         avg = {
             'rouge-1': {k: float(sumRouge1[k]) / float(numSamples)

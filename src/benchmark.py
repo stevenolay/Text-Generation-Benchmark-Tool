@@ -3,11 +3,13 @@ import json
 import glob
 import os
 import codecs
+from SRO import SummaryReaderObject
 from tqdm import tqdm
 
 from utils import (
     fileLen,
-    createFolderIfNotExists
+    createFolderIfNotExists,
+    fileExists
 )
 
 from SummarizerLibrary import fetchSummarizers
@@ -250,14 +252,38 @@ class benchmark:
 
         return summaryFileName
 
+    def skipSummaryGen(self, generatedSummariesFilePath,
+                       corpusFilePath, summarizerKey):
+        if fileExists(generatedSummariesFilePath):
+
+            if fileLen(corpusFilePath) == fileLen(generatedSummariesFilePath):
+                LOGGER.info(
+                    'Skipping Summary Generation. Summaries Aready Exist for '
+                    'corpus: {0} using summarizer: {1} and no failed '
+                    'summaries were inferred.'
+                    .format(corpusFilePath, summarizerKey))
+                return True
+            else:
+                return False
+
     def runSummarizationsForCorpus(self, corpusFilePath, summarizerKey):
         generatedSummariesFilePath = self.generateSummaryFilePath(
             corpusFilePath, summarizerKey
         )
 
+        failedIndicies = set()
+        self.failedIndicies[summarizerKey][corpusFilePath] = \
+            failedIndicies
+
+        self.corpusToSummaryMap[summarizerKey][corpusFilePath] = \
+            generatedSummariesFilePath
+
+        if self.skipSummaryGen(generatedSummariesFilePath,
+                               corpusFilePath, summarizerKey):
+            return
+
         summarizerSwitch = self.summarizerSwitch
 
-        failedIndicies = set()
         fileLength = fileLen(corpusFilePath)
         results = codecs.open(generatedSummariesFilePath, 'w', 'utf-8')
         samples = codecs.open(corpusFilePath, 'rb+', 'utf-8')
@@ -287,12 +313,6 @@ class benchmark:
 
         samples.close()  # Close the corpora file.
         results.close()  # Close the results file.
-
-        self.failedIndicies[summarizerKey][corpusFilePath] = \
-            failedIndicies
-
-        self.corpusToSummaryMap[summarizerKey][corpusFilePath] = \
-            generatedSummariesFilePath
 
     def generateCorpusGoldFilePath(self, corpusFilePath):
         '''
@@ -356,65 +376,21 @@ class benchmark:
 
             summaryPath = self.\
                 corpusToSummaryMap[summarizerKey.lower()][corpusFilepath]
-            summaries = codecs.open(summaryPath, 'r', 'utf-8')
 
-            corpusReport = ''
-            goldExamples = codecs.open(goldPath, 'r', 'utf-8')
             failedIndicies = self.\
                 failedIndicies[summarizerKey.lower()][corpusFilepath]
-            corpusReport = self.evaluatorSwitch\
-                .executeAndReportEvaluatorsOnCorpus(
-                    summaries, goldExamples, failedIndicies
-                )
-            goldExamples.close()
 
-            summaries.close()
+            SRO = SummaryReaderObject(
+                summaryPath, goldPath, failedIndicies=failedIndicies
+            )
+
+            corpusReport = ''
+            corpusReport = self.evaluatorSwitch\
+                .executeAndReportEvaluatorsOnCorpus(SRO)
+
             summarizerReports.append(corpusReport)
 
         return ''.join(summarizerReports)
-
-    def generateGoldSubset(self, goldPath, corpusFilepath, summarizerKey):
-        LOGGER.info(
-            'Generating Goldsubset for Corpus: %s using summarizer: %s',
-            corpusFilepath,
-            summarizerKey.lower()
-        )
-
-        failedIndicies = self.\
-            failedIndicies[summarizerKey.lower()][corpusFilepath]
-
-        goldSubsetFilePath = self.generateGoldSubsetFilePath(
-            corpusFilepath, summarizerKey)
-
-        goldSet = codecs.open(goldPath, 'r', 'utf-8')
-        fileLength = fileLen(goldPath)
-        goldSubset = codecs.open(goldSubsetFilePath, 'w', 'utf-8')
-
-        for index, text in tqdm(enumerate(goldSet), total=fileLength):
-
-            if index in failedIndicies:
-                if index == fileLength - 1:  # Delete the extra \n(newline)
-                    goldSubset.seek(-1, os.SEEK_END)
-                    goldSubset.truncate()
-                continue
-
-            if index < (fileLength - 1):
-                goldSubset.write('\n{0}'.format(text))
-            else:
-                goldSubset.write('{0}'.format(text))
-        goldSet.close()
-        goldSubset.close()
-
-    def generateGoldSubsetFilePath(self, corpusFilepath, summarizerKey):
-        corpusFileName = os.path.basename(corpusFilepath)
-        fileName, ext = os.path.splitext(corpusFileName)
-
-        goldSubsetFilePath = os.path.join(
-            '..', 'data', 'gold_subsets',
-            '{0}_{1}_gold{2}'.format(
-                summarizerKey.lower(), fileName, ext)
-        )
-        return goldSubsetFilePath
 
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()
