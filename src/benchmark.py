@@ -19,7 +19,7 @@ from Summarizer.SummarizerSwitch import SummarizerSwitch
 
 from Evaluator.EvaluatorSwitch import EvaluatorSwitch
 
-from mappings import (
+from defaults import (
     SUPPORTED_EVAL_SYSTEMS,
     SUPPORTED_TOKENIZERS,
     SUPPORTED_SUMMARIZERS,
