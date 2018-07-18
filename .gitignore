@@ -3,10 +3,15 @@ data/example_dataset_en/samples/corpus-large.txt
 data/example_dataset_en/samples/.DS_Store
 data/generated_summaries/
 data/DUC/gold
+data/DUC/gold
+
+data/DUC_1
+data/DUC_multi
+
 data/DUC/samples
 data/.DS_Store
 src/__pycache__/
-.DS_Store
+*.DS_Store
 .project
 .pydevproject
 *.pyc
