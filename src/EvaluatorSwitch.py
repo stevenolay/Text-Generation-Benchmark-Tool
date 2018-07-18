@@ -7,8 +7,7 @@ from tqdm import tqdm
 
 from utils import (
     TemporaryDirectory,
-    fileLen,
-    fileLenOpen
+    fileLen
 )
 
 import logging
@@ -23,22 +22,22 @@ class EvaluatorSwitch(object):
     def __init__(self, evaluators):
         self.evaluationLibrary = fetchEvaluators(evaluators)
         self.functionMap = {
-            'rouge': self.rougeScore,
-            'pyrouge': self.pyRouge,
-            'meteor': self.meteor
+            'rouge': self._rougeScore,
+            'pyrouge': self._pyRouge,
+            'meteor': self._meteor
         }
 
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
         evaluatorReportsForCorpus = []
         for evaluator in self.evaluationLibrary:
-            report = self.toggleAndExecuteEvaluator(
+            report = self._toggleAndExecuteEvaluator(
                 evaluator, SRO.copy())
 
             evaluatorReportsForCorpus.extend(report)
 
         return ''.join(evaluatorReportsForCorpus)
 
-    def toggleAndExecuteEvaluator(self, evaluatorKey, SRO):
+    def _toggleAndExecuteEvaluator(self, evaluatorKey, SRO):
         functions = self.functionMap
 
         if evaluatorKey in functions:
@@ -49,7 +48,7 @@ class EvaluatorSwitch(object):
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
-    def meteor(self, SRO):
+    def _meteor(self, SRO):
         LOGGER.info('Calculating Meteor Score:')
 
         meteor = self.evaluationLibrary['meteor']
@@ -74,7 +73,7 @@ class EvaluatorSwitch(object):
 
         return report
 
-    def rougeScore(self, SRO):
+    def _rougeScore(self, SRO):
         LOGGER.info('Calculating Rouge Score:')
 
         rouge = self.evaluationLibrary['rouge']
@@ -115,7 +114,7 @@ class EvaluatorSwitch(object):
 
         return report
 
-    def pyRouge(self, summaries, goldExamples, failures):
+    def _pyRouge(self, summaries, goldExamples, failures):
         LOGGER.info('Calculating pyRouge score:')
         Rouge155 = self.evaluationLibrary['pyrouge']
         output = ''
