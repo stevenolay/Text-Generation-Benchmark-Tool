@@ -4,6 +4,7 @@ import tempfile
 import contextlib
 import shutil
 import codecs
+import json
 from collections import OrderedDict, defaultdict
 
 
@@ -144,13 +145,17 @@ class OrderDUC2004:
                 return
 
             for identifier in lineMap:
-                filePath = fileIdentifierMap[identifier][0]
-                with codecs.open(filePath, 'r', 'utf-8') as f:
-                    text = f.readlines()
-                    targetText = ''.join(text)
-                    targetText = targetText.replace('\n', '')
-                    combo.write(targetText)
-                    combo.write('\n')
+                filePaths = fileIdentifierMap[identifier]
+                references = []
+                for filePath in filePaths:
+                    with codecs.open(filePath, 'r', 'utf-8') as f:
+                        text = f.readlines()
+                        targetText = ''.join(text)
+                        targetText = targetText.replace('\n', '')
+                        references.append(targetText)
+                referencesJSON = {"references": references}
+                combo.write(json.dumps(referencesJSON))
+                combo.write('\n')
             combo.seek(-1, os.SEEK_END)
             combo.truncate()  # Remove trailing new line
 
