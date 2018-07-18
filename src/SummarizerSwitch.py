@@ -14,14 +14,14 @@ class SummarizerSwitch(object):
 
         sumyKeys = SUMY_KEYS
         sumyFunctionMap = {
-            k: self.sumySwap(k)
+            k: self._sumySwap(k)
             for k in sumyKeys
         }
 
         self.functionMap = {
-            'smmrre': self.smmrre,
-            'sedona': self.sedona,
-            'recollect': self.recollect
+            'smmrre': self._smmrre,
+            'sedona': self._sedona,
+            'recollect': self._recollect
         }
 
         self.functionMap.update(sumyFunctionMap)
@@ -56,7 +56,7 @@ class SummarizerSwitch(object):
         error = '{0}: Is not an available summarizer'.format(summarizerKey)
         raise ValueError(error)
 
-    def recollect(self, text):
+    def _recollect(self, text):
         benchmark = self.benchmark
         numSentences = benchmark.sentenceCount
 
@@ -72,7 +72,7 @@ class SummarizerSwitch(object):
 
         return summary
 
-    def sedona(self, text):
+    def _sedona(self, text):
         benchmark = self.benchmark
         numSentences = benchmark.sentenceCount
 
@@ -87,7 +87,7 @@ class SummarizerSwitch(object):
 
         return summary
 
-    def smmrre(self, text):
+    def _smmrre(self, text):
         benchmark = self.benchmark
         numSentences = benchmark.sentenceCount
 
@@ -102,7 +102,7 @@ class SummarizerSwitch(object):
 
         return summary
 
-    def sumySwap(self, sumyMethodKey):
+    def _sumySwap(self, sumyMethodKey):
         def sumyFunc(text):
             benchmark = self.benchmark
             numSentences = benchmark.sentenceCount
