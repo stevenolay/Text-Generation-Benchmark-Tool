@@ -1,4 +1,4 @@
-from summarizer_source_files.smmrRE import smmrRE
+from summarizer_source_files.smmrRE.smmrRE import smmrRE
 from summarizer_source_files.sumy_wrapper import sumyWrapper
 from summarizer_source_files.Sedona import Sedona
 from summarizer_source_files.Recollect import Recollect
