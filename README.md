@@ -73,34 +73,43 @@ $ python benchmark.py
 .
 ├── README.md
 ├── data
-│   ├── example_dataset_en
-│   │   ├── gold
-│   │   │   └── corpus-000000_gold.txt
-│   │   └── samples
-│   │       └── corpus-000000.txt
-│   └── generated_summaries
+│   └── example_dataset_en
+│       ├── gold
+│       │   ├── corpus-000000_gold.txt
+│       └── samples
+│           └── corpus-000000.txt
+├── parsers
+│   └── DUCParser.py
 └── src
-    ├── SummarizerSwitch.py
-    ├── benchmark.py
-    ├── evaluator_library.py
-    ├── evaluator_source_files
-    │   ├── Meteor
-    │   │   ├── Meteor.py
-    │   │   ├── __init__.py
-    │   │   ├── data
-    │   │   │   └── paraphrase-en.gz
-    │   │   └── meteor-1.5.jar
-    │   └── __init__.py
-    ├── mappings.py
-    ├── settings.ini
-    ├── summarizer_library.py
-    ├── summarizer_source_files
-    │   ├── Recollect.py
-    │   ├── Sedona.py
+    ├── Evaluator
+    │   ├── EvaluatorLibrary.py
+    │   ├── EvaluatorSwitch.py
     │   ├── __init__.py
-    │   ├── ll.py
-    │   ├── smmrRE.py
-    │   └── sumy_wrapper.py
+    │   └── evaluator_source_files
+    │       ├── Meteor
+    │       │   ├── Meteor.py
+    │       │   ├── __init__.py
+    │       │   ├── data
+    │       │   │   └── paraphrase-en.gz
+    │       │   └── meteor-1.5.jar
+    │       └── __init__.py
+    ├── SRO.py
+    ├── Summarizer
+    │   ├── SummarizerLibrary.py
+    │   ├── SummarizerSwitch.py
+    │   ├── __init__.py
+    │   └── summarizer_source_files
+    │       ├── Recollect.py
+    │       ├── Sedona.py
+    │       ├── __init__.py
+    │       ├── smmrRE
+    │       │   ├── __init__.py
+    │       │   ├── ll.py
+    │       │   └── smmrRE.py
+    │       └── sumy_wrapper.py
+    ├── benchmark.py
+    ├── defaults.py
+    ├── settings.ini
     └── utils.py
 ```
 ## <a name="dataset"></a> Adding Datasets
