@@ -135,22 +135,59 @@ There are a few key folders and files that you must interface with in order to a
 #### Key Files:
 1. src/benchmark.py
     - Self-executing class that runs summarization and evaluations based on the settings specified in src/settings.ini
-2. src/mappings.py
+2. src/defaults.py
     - Contains all the settings defaults and supported summarizers and metrics.
-3. src/summarizer_library.py
+    - Newely atted summarizers and metrics must be added to the supported lists.
+3. src/Summarizer/SummarizerLibrary.py
     - Loads in summarizer libraries and wrappers.
-    - Contains function fetchSummarizers that expects a list of strings, that reference targeted summarizers. It returns a dictionary where the keys are the summarizer and the value is the class object for the summarizer you would like to use.
-4. src/evaluator_library.py
+    - Contains function fetchSummarizers that expects a list of Strings, that reference targeted summarizers. It returns a dictionary where the keys are the summarizer and the value is the class object for the summarizer you would like to use.
+4. src/Evaluator/EvaluatorLibrary.py
     - Loads in metric tool libraries and wrappers.
-    - Contains function fetchEvaluators that expects a list of strings, that reference targeted evaluators. It returns a dictionary where the keys are the evaluator and the value is the class object for the evaluator you would like to use.
-5.  src/SummarizerSwitch.py
+    - Contains function fetchEvaluators that expects a list of Strings, that reference targeted evaluators. It returns a dictionary where the keys are the evaluator and the value is the class object for the evaluator you would like to use.
+5.  src/Summarizer/SummarizerSwitch.py
     - Class that contains methods to call on summarizers.
     - function toggleAndExecuteSummarizer()
-        - Inputs: summarizerKey(string), takes in a the key to a summarizer. text(string), string to summarize.
+        - Inputs: summarizerKey(String), takes in a the key to a summarizer. text(String), String to summarize.
         - Output: summarized text, summarized using the targeted summarizer.
-        - Maps summarizer to a wrapper method that reformats text and calls the library for that summarizer appropriately. Output of the wrapper method is returned to the caller of this function.
+        - Maps summarizer to a private methods that reformats text and calls the library for that targeted summarizer. Output of the method is returned to the caller of this function.
+6.  src/Evaluator/EvaluatorSwitch.py
+    - Class that contains methods to call on summarizers.
+    - function executeAndReportEvaluatorsOnCorpus()
+        - Inputs: SRO(SummaryReaderObject) used to fetch hypotheses and their corresponding references.
+        - Output: Reports for the hypothesis and their references across the specified metrics.
 
 ### <a name="summarizer_a"></a> Adding Summarizers
-
+1. Navigate to src/Summarizer/SummarizerSwitch.py
+2. Create a private(\_) method for your summarizer.
+    - Method should take one input: \_privateMethod(self, text)
+    - Output: Summarized Text(String)
+    - Note: SummarizerSwitch Class contains some helpful attributes:
+        - self.benchmark.preTokenized (BOOLEAN) -> Tells you wether or not the text is already tokenized.
+        - self.joinTokenizedSentences(text) (Function) -> Returns text with tokenization removed.
+        - self.splitTokenizedSentences(text) (Function) -> Returns list(String) with text split by sentence seperator.
+3. Add it to class member self.functionMap in the class's constructor(__init__)
+    - Key: String, Indentifier for your summarizer.
+    - Value: self._privateMethod()
+4. Navigate to src/defaults.py
+5. Place the identifier(Case Insensitive) for your private method in the SUPPORTED_SUMMARIZERS list.
+6. To run the benchmark tool with your summarizer update the settings.ini to include your identifier(Case Insensitive), and run the tool.
 
 ### <a name="metrics_a"></a> Adding Metrics
+1. Navigate to src/Evaluator/EvaluatorSwitch.py
+2. Create a private(\_) method for your evaluator.
+    - Input: \_privateMethod(self, SRO)
+        - SRO is a Summary Reader Object. This object contains two public methods:
+            - SRO.readOne()
+                - Output:  tuple( String, list(String) ) -> (hypothesis, references)
+                - Returns a tuple with the first element the hypothesis and the second element the list of references.
+            - SRO.readAll()
+                - Output: list( tuple( String, list(String) ) ) -> [(hypothesis, references),...]
+            - SRO.length or len(SRO)
+                - Output: int -> number of summaries.
+    - Output: Report(String) -> results of the metric calculations.
+3. Add it to class member self.functionMap in the class's constructor(__init__)
+    - Key: String, Indentifier for your Evaluator(Case Insensitive)
+    - Value: self._privateMethod()
+4. Navigate to src/defaults.py
+5. Place the identifier(Case Insensitive) for your private method in the SUPPORTED_EVAL_SYSTEMS list.
+6. To run the benchmark tool with your metric update the settings.ini to include your identifier(Case Insensitive), and run the tool.
