@@ -21,14 +21,11 @@ def fetchEvaluators(enabledEvaluators):
         'meteor': Meteor()
     }
 
-    enabledEvaluators = [
-        summarizer.lower() for summarizer in enabledEvaluators
-    ]
-
     desiredEvaluators = dict(
-        (k, EVALUATORS[k])
-        if k in EVALUATORS else (k, None)
+        (k.lower(), EVALUATORS[k.lower()])
+        if k.lower() in EVALUATORS else (k, None)
         for k in enabledEvaluators
-    )
+    )# Only lowercase keys in the evaluators list. As users may opt out of
+     # using this to assist to load in libraries for their metrics.
 
     return desiredEvaluators

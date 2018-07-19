@@ -28,10 +28,14 @@ class EvaluatorSwitch(object):
         }
 
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
+        assert str(type(SRO)) == "<class 'SRO.SummaryReaderObject'>"
+
         evaluatorReportsForCorpus = []
+        currSRO = SRO
         for evaluator in self.evaluationLibrary:
             report = self._toggleAndExecuteEvaluator(
-                evaluator, SRO.copy())
+                evaluator, currSRO)
+            currSRO = currSRO.copy()
 
             evaluatorReportsForCorpus.extend(report)
 
@@ -53,7 +57,7 @@ class EvaluatorSwitch(object):
 
         meteor = self.evaluationLibrary['meteor']
 
-        readerLength = SRO.length
+        readerLength = len(SRO)
         numSamples = 0
         sumScores = 0.0
         for i in tqdm(range(readerLength)):
@@ -82,7 +86,7 @@ class EvaluatorSwitch(object):
         sumRouge2 = {'r': 0.0, 'p': 0.0, 'f': 0.0}
         sumRougel = {'r': 0.0, 'p': 0.0, 'f': 0.0}
 
-        readerLength = SRO.length
+        readerLength = len(SRO)
         numSamples = 0
         for i in tqdm(range(readerLength)):
             hypothesis, references = SRO.readOne()
@@ -114,14 +118,14 @@ class EvaluatorSwitch(object):
 
         return report
 
-    def _pyRouge(self, summaries, goldExamples, failures):
+    def _pyRouge(self, SRO):
         LOGGER.info('Calculating pyRouge score:')
         Rouge155 = self.evaluationLibrary['pyrouge']
         output = ''
 
-        goldFileLength = fileLen(goldExamples.name)
-
-        if len(failures) == goldFileLength:
+        readerLength = len(SRO)
+        failures = SRO.failedIndicies
+        if len(failures) == readerLength:
             # No summaries were successful
             return [
                 '\n\t\t\tThe pyRouge score could not be calculated. No'
@@ -134,25 +138,21 @@ class EvaluatorSwitch(object):
             os.makedirs(system_dir)
             os.makedirs(model_dir)
 
-            for i in tqdm(range(goldFileLength)):
-                goldExample = goldExamples.readline()
-                if i in failures:
-                    # If the summary failed we skip to the next gold example
-                    continue
-                summary = summaries.readline()  # Only proceed the summary read
-                # if the current sample count did not fail.
+            for i in tqdm(range(readerLength)):
+                hypothesis, references = SRO.readOne()
 
-                summary_fn = '%i.txt' % i
-                gold_fn = '%i.%i.txt' % (i, 0)
-                with codecs.open(os.path.join(
-                    model_dir, gold_fn), 'w', 'utf-8'
-                ) as f:
-                    f.write(goldExample)
+                hypothesis_fn = '%i.txt' % i
+                for j, reference in enumerate(references):
+                    ref_fn = '%i.%i.txt' % (i, j)
+                    with codecs.open(os.path.join(
+                        model_dir, ref_fn), 'w', 'utf-8'
+                    ) as f:
+                        f.write(reference)
 
-                with codecs.open(os.path.join(
-                    system_dir, summary_fn), 'w', 'utf-8'
-                ) as f:
-                    f.write(summary)
+                    with codecs.open(os.path.join(
+                        system_dir, hypothesis_fn), 'w', 'utf-8'
+                    ) as f:
+                        f.write(hypothesis)
 
             rouge = Rouge155()
 
