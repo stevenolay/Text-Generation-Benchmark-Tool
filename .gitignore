@@ -15,3 +15,4 @@ src/__pycache__/
 .project
 .pydevproject
 *.pyc
+*__pycache__
