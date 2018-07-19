@@ -66,22 +66,26 @@ class SummaryReaderObject:
 
     def readOne(self):
         if self.indexOfFileReader > self.length - 1:
-            raise IndexError('All Lines Have Been Read.\
-                Call Copy if you need to re-read this object.')
+            return None
+        try:
+            references = self._readReferences()
 
-        references = self._readReferences()
+            if self.indexOfFileReader in self.failedIndicies:
+                # If the summary failed then skip to the next step.
+                # References always need to be read first as the file
+                # reader needs to advance to the next reference to match
+                # the next succesful summary
+                self.indexOfFileReader += 1
+                return self.readOne()  # Recurse until you can read a summary
+                # that has not failed
 
-        if self.indexOfFileReader in self.failedIndicies:
-            # If the summary failed then skip to the next set
-            # references always need to be read first as the file
-            # reader needs to advance to the next reference
+            summary = self.summariesFile.readline()
             self.indexOfFileReader += 1
-            return self.readOne()  # Recurse until you can read a summary
-            # that has not failed
-
-        summary = self.summariesFile.readline()
-        self.indexOfFileReader += 1
-        return (summary, references)
+            return (summary, references)
+        except ValueError as err:
+            if str(err)=='I/O operation on closed file':
+                raise IndexError('File has been closed.\
+                Call Copy if you need to re-read this object.')
 
     def _readReferences(self):
         if self.goldFormat == 'JSON':
@@ -101,15 +105,20 @@ class SummaryReaderObject:
             Reads all remaining lines. Will return an empty list if the
             reader object has reached the end of the gold file.
         '''
-        allLines = []
         try:
-            for i in range(self.numSummaries):
-                allLines.append(self.readOne())
-        except IndexError:
-            pass
+            allLines = []
+            for i in range(self.indexOfFileReader, self.length):
+                readerObj = self.readOne()
+                if not readerObj:
+                    return
+                allLines.append(readerObj)
 
-        self._closeFiles()
-        return allLines
+            self._closeFiles()
+            return allLines
+        except ValueError as err:
+            if str(err)=='I/O operation on closed file':
+                raise IndexError('File has been closed.\
+                Call Copy if you need to re-read this object.')
 
     def _closeFiles(self):
         self.summariesFile.close()
