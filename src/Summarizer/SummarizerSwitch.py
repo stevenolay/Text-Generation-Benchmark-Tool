@@ -26,6 +26,11 @@ class SummarizerSwitch(object):
 
         self.functionMap.update(sumyFunctionMap)
 
+        self.functionMap = dict(
+            (k.lower(), v)
+            for k,v in self.functionMap .iteritems()
+        )
+
     def joinTokenizedSentences(self, text):
         benchmark = self.benchmark
         sentenceSeperator = benchmark.sentenceSeperator
