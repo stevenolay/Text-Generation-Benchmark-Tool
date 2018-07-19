@@ -26,9 +26,13 @@ class EvaluatorSwitch(object):
             'pyrouge': self._pyRouge,
             'meteor': self._meteor
         }
+        self.functionMap = dict(
+            (k.lower(), v)
+            for k,v in self.functionMap .iteritems()
+        )
 
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
-        assert str(type(SRO)) == "<class 'SRO.SummaryReaderObject'>"
+        #assert str(type(SRO)) == "<class 'SRO.SummaryReaderObject'>"
 
         evaluatorReportsForCorpus = []
         currSRO = SRO
