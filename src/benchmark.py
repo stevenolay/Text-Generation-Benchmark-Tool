@@ -62,8 +62,7 @@ class benchmark:
 
         self.dataFolders = self.fetchSettingByKey(
             'data_folders',
-            expect_list=True
-        )
+            expect_list=True)
 
         self.subsetsEnabled = False
         # Load Seperators
@@ -255,22 +254,22 @@ class benchmark:
     def skipSummaryGen(self, generatedSummariesFilePath,
                        corpusFilePath, summarizerKey):
         if fileExists(generatedSummariesFilePath):
-
             if fileLen(corpusFilePath) == fileLen(generatedSummariesFilePath):
                 LOGGER.info(
                     'Skipping Summary Generation. Summaries Aready Exist for '
-                    'corpus: {0} using summarizer: {1} and no failed '
+                    'Corpus: {0} using summarizer: {1} and no failed '
                     'summaries were inferred.'
                     .format(corpusFilePath, summarizerKey))
                 return True
-            else:
-                return False
+
+        return False
 
     def runSummarizationsForCorpus(self, corpusFilePath, summarizerKey):
         generatedSummariesFilePath = self.generateSummaryFilePath(
             corpusFilePath, summarizerKey
         )
 
+        # Initializing class maps for failures and summary paths.
         failedIndicies = set()
         self.failedIndicies[summarizerKey][corpusFilePath] = \
             failedIndicies
@@ -282,6 +281,7 @@ class benchmark:
                                corpusFilePath, summarizerKey):
             return
 
+        # Fetching and Running Summarizations
         summarizerSwitch = self.summarizerSwitch
 
         fileLength = fileLen(corpusFilePath)
