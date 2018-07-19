@@ -159,7 +159,8 @@ There are a few key folders and files that you must interface with in order to a
 ### <a name="summarizer_a"></a> Adding Summarizers
 1. Navigate to src/Summarizer/SummarizerSwitch.py
 2. Create a private(\_) method for your summarizer.
-    - Method should take one input: \_privateMethod(self, text)
+    - \_privateMethod(self, text)
+    - Input: Text to summarize(String)
     - Output: Summarized Text(String)
     - Note: SummarizerSwitch Class contains some helpful attributes:
         - self.benchmark.preTokenized (BOOLEAN) -> Tells you wether or not the text is already tokenized.
@@ -175,8 +176,9 @@ There are a few key folders and files that you must interface with in order to a
 ### <a name="metrics_a"></a> Adding Metrics
 1. Navigate to src/Evaluator/EvaluatorSwitch.py
 2. Create a private(\_) method for your evaluator.
-    - Input: \_privateMethod(self, SRO)
-        - SRO is a Summary Reader Object. This object contains two public methods:
+    - \_privateMethod(self, SRO)
+    - input: SRO(Summary Reader Object)
+        - This object contains two public methods:
             - SRO.readOne()
                 - Output:  tuple( String, list(String) ) -> (hypothesis, references)
                 - Returns a tuple with the first element the hypothesis and the second element the list of references.
