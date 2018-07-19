@@ -40,13 +40,9 @@ def fetchSummarizers(enabledSummarizers):
 
     SUMMARIZERS.update(sumySummarizers)
 
-    enabledSummarizers = [
-        summarizer.lower() for summarizer in enabledSummarizers
-    ]
-
     desiredSummarizers = dict(
-        (k.lower(), SUMMARIZERS[k])
-        if k in SUMMARIZERS else (k, None)
+        (k.lower(), SUMMARIZERS[k.lower()])
+        if k.lower() in SUMMARIZERS else (k, None)
         for k in enabledSummarizers
     )
 
