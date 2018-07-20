@@ -160,6 +160,7 @@ There are a few key folders and files that you must interface with in order to a
     - Input: Text to summarize(String)
     - Output: Summarized Text(String)
     - Note: SummarizerSwitch Class contains some helpful attributes:
+        - self.benchmark.sentenceCount (int) -> Number of Sentences specified in configuration file('src/settings.ini')
         - self.benchmark.preTokenized (BOOLEAN) -> Tells you wether or not the text is already tokenized.
         - self.joinTokenizedSentences(text) (Function) -> Returns text with tokenization removed.
         - self.splitTokenizedSentences(text) (Function) -> Returns list(String) with text split by sentence seperator.
