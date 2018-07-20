@@ -73,13 +73,14 @@ $ python benchmark.py
 .
 ├── README.md
 ├── data
-│   └── example_dataset_en
-│       ├── gold
-│       │   ├── corpus-000000_gold.txt
-│       └── samples
-│           └── corpus-000000.txt
+│   ├── example_dataset_en
+│   │   ├── gold
+│   │   │   ├── corpus-000000_gold.txt
+│   │   └── samples
+│   │       └── corpus-000000.txt
 ├── parsers
 │   └── DUCParser.py
+├── requirements.txt
 └── src
     ├── Evaluator
     │   ├── EvaluatorLibrary.py
@@ -93,7 +94,6 @@ $ python benchmark.py
     │       │   │   └── paraphrase-en.gz
     │       │   └── meteor-1.5.jar
     │       └── __init__.py
-    ├── SRO.py
     ├── Summarizer
     │   ├── SummarizerLibrary.py
     │   ├── SummarizerSwitch.py
@@ -108,15 +108,19 @@ $ python benchmark.py
     │       │   └── smmrRE.py
     │       └── sumy_wrapper.py
     ├── benchmark.py
-    ├── defaults.py
     ├── settings.ini
-    └── utils.py
+    └── tools
+        ├── SRO.py
+        ├── __init__.py
+        ├── defaults.py
+        ├── plot.py
+        └── utils.py
 ```
 ## <a name="dataset"></a> Adding Datasets
 Datasets are intended to be stored in data/ but you are able to provide comma seperated absolute and relative paths to datasets stored elsewhere in the src/settings.ini file under general -> data_sets. Note: Even datasets stored in data/ must be specified in the settings.ini. This version does not support autodetection of datasets.
 
 ### <a name="dataset_f"></a> Formatting Datasets
-Data sets should contain 2 subfolders: 'gold/' and 'samples/'. Gold should contain your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a `_gold` Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
+Datasets should contain 2 subfolders: 'gold/' and 'samples/'. Gold should contain your model examples and Samples should hold your target documents for summarization. Your corpora examples should be line seperated. Gold files should have the same name as the samples with a `_gold` Files that do not follow this format cannot be discovered by this application. Although documents must be line seperated summarizers do not. You are free to use sentence tags. Specify the sentence tag seperator in src/settings.ini in general -> sentence_seperator. You must also set general -> preTokenized to true.
 
 ### <a name="source_code"></a> Adding to Source Code
 This benchmark tool is designed with the intention of making it straightforward to add and remove summarizers and metrics.
@@ -135,7 +139,7 @@ There are a few key folders and files that you must interface with in order to a
 #### Key Files:
 1. src/benchmark.py
     - Self-executing class that runs summarization and evaluations based on the settings specified in src/settings.ini
-2. src/defaults.py
+2. src/tools/defaults.py
     - Contains all the settings defaults and supported summarizers and metrics.
     - Newely atted summarizers and metrics must be added to the supported lists.
 3. src/Summarizer/SummarizerLibrary.py
@@ -166,9 +170,9 @@ There are a few key folders and files that you must interface with in order to a
         - self.benchmark.preTokenized (BOOLEAN) -> Tells you wether or not the text is already tokenized.
         - self.joinTokenizedSentences(text) (Function) -> Returns text with tokenization removed.
         - self.splitTokenizedSentences(text) (Function) -> Returns list(String) with text split by sentence seperator.
-3. Add it to class member self.functionMap in the class's constructor(__init__)
+3. Add it to class member self.functionMap in the class's constructor(\_\_init\_\_)
     - Key: String, Indentifier for your summarizer.
-    - Value: self._privateMethod()
+    - Value: self.\_privateMethod()
 4. Navigate to src/defaults.py
 5. Place the identifier(Case Insensitive) for your private method in the SUPPORTED_SUMMARIZERS list.
 6. To run the benchmark tool with your summarizer update the settings.ini to include your identifier(Case Insensitive), and run the tool.
@@ -187,9 +191,9 @@ There are a few key folders and files that you must interface with in order to a
             - SRO.length or len(SRO)
                 - Output: int -> number of summaries.
     - Output: Report(String) -> results of the metric calculations.
-3. Add it to class member self.functionMap in the class's constructor(__init__)
+3. Add it to class member self.functionMap in the class's constructor(\_\_init\_\_)
     - Key: String, Indentifier for your Evaluator(Case Insensitive)
-    - Value: self._privateMethod()
-4. Navigate to src/defaults.py
+    - Value: self.\_privateMethod()
+4. Navigate to src/tools/defaults.py
 5. Place the identifier(Case Insensitive) for your private method in the SUPPORTED_EVAL_SYSTEMS list.
 6. To run the benchmark tool with your metric update the settings.ini to include your identifier(Case Insensitive), and run the tool.
