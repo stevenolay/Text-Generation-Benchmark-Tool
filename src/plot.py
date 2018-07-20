@@ -3,11 +3,17 @@ import plotly.graph_objs as go
 py.offline.init_notebook_mode()
 from plotly.tools import FigureFactory as ff
 import pandas as pd
+import os
 
 def plotTable(file):
+    resultsFilePath, resultsFileName = os.path.split(file)
+
     df = pd.read_csv(file)
     table = ff.create_table(df)
-    py.offline.plot(table)
+
+    plotFileName = '{0}.html'.format(resultsFileName)
+    filename = os.path.join(resultsFilePath, plotFileName)
+    py.offline.plot(table, filename=filename)
 
 '''
 plotTable('results.csv')
