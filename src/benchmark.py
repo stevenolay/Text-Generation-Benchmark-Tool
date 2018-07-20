@@ -5,6 +5,7 @@ import glob
 import os
 import codecs
 from SRO import SummaryReaderObject
+from datetime import datetime
 from tqdm import tqdm
 from plot import plotTable
 from utils import (
@@ -399,9 +400,20 @@ class benchmark:
         return summarizerReports
 
     def writeToCSV(self, csvList):
-        with open("results.csv", "wb") as f:
+        resultsPath = os.path.join('..', 'results')
+        createFolderIfNotExists(resultsPath)
+
+        currDatetime = str(datetime.now())
+        pathToResults = os.path.join(
+            resultsPath,
+            "results_{0}.csv".format(
+                currDatetime
+            )
+        )
+        with codecs.open(pathToResults, "wb") as f:
             writer = csv.writer(f)
             writer.writerows(csvList)
+        return pathToResults
 
     def plotReport(self):
         '''
@@ -437,8 +449,8 @@ class benchmark:
                 summarizerReportMap)
             csvList.append(csvLine)
 
-        self.writeToCSV(csvList)
-        plotTable("results.csv")
+        pathToCSV = self.writeToCSV(csvList)
+        plotTable(pathToCSV)
 
 
     def summarizerReportMapToCSVFormat(self, summarizer, summarizerReportMap):
