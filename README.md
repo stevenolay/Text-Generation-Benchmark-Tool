@@ -85,25 +85,19 @@ $ python benchmark.py
     ├── Evaluator
     │   ├── EvaluatorLibrary.py
     │   ├── EvaluatorSwitch.py
-    │   ├── __init__.py
     │   └── evaluator_source_files
-    │       ├── Meteor
-    │       │   ├── Meteor.py
-    │       │   ├── __init__.py
-    │       │   ├── data
-    │       │   │   └── paraphrase-en.gz
-    │       │   └── meteor-1.5.jar
-    │       └── __init__.py
+    │       |── Meteor
+    │           ├── Meteor.py
+    │           ├── data
+    │           │   └── paraphrase-en.gz
+    │           └── meteor-1.5.jar
     ├── Summarizer
     │   ├── SummarizerLibrary.py
     │   ├── SummarizerSwitch.py
-    │   ├── __init__.py
     │   └── summarizer_source_files
     │       ├── Recollect.py
     │       ├── Sedona.py
-    │       ├── __init__.py
     │       ├── smmrRE
-    │       │   ├── __init__.py
     │       │   ├── ll.py
     │       │   └── smmrRE.py
     │       └── sumy_wrapper.py
@@ -111,7 +105,6 @@ $ python benchmark.py
     ├── settings.ini
     └── tools
         ├── SRO.py
-        ├── __init__.py
         ├── defaults.py
         ├── plot.py
         └── utils.py
