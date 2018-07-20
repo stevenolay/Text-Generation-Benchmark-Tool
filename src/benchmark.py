@@ -155,6 +155,16 @@ class benchmark:
             }
         '''
         self.corpusToSummaryMap = defaultdict(dict)
+        '''
+        Maps to the location of the summary for a given summarizer
+        and corpus.
+            {
+                'summarizer': {
+                    'corpusFilePath': 'summaryFilePath'
+                }
+            }
+
+        '''
 
     def walkDataCorporaFolders(self):
         dataFolders = self.dataFolders
