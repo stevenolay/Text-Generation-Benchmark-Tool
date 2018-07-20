@@ -4,6 +4,7 @@ data/example_dataset_en/samples/.DS_Store
 data/generated_summaries/
 data/DUC/gold
 data/DUC/gold
+results
 
 data/DUC_1
 data/DUC_multi
