@@ -1,5 +1,6 @@
 import plotly as py
 import plotly.graph_objs as go
+import plotly.figure_factory
 py.offline.init_notebook_mode()
 from plotly.tools import FigureFactory as ff
 import pandas as pd
@@ -9,7 +10,7 @@ def plotTable(file):
     resultsFilePath, resultsFileName = os.path.split(file)
 
     df = pd.read_csv(file)
-    table = ff.create_table(df)
+    table = plotly.figure_factory.create_table(df)
 
     plotFileName = '{0}.html'.format(resultsFileName)
     filename = os.path.join(resultsFilePath, plotFileName)
