@@ -4,11 +4,11 @@ import csv
 import glob
 import os
 import codecs
-from SRO import SummaryReaderObject
+from tools.SRO import SummaryReaderObject
 from datetime import datetime
 from tqdm import tqdm
-from plot import plotTable
-from utils import (
+from tools.plot import plotTable
+from tools.utils import (
     fileLen,
     createFolderIfNotExists,
     fileExists
@@ -21,7 +21,7 @@ from Summarizer.SummarizerSwitch import SummarizerSwitch
 
 from Evaluator.EvaluatorSwitch import EvaluatorSwitch
 
-from defaults import (
+from tools.defaults import (
     SUPPORTED_EVAL_SYSTEMS,
     SUPPORTED_TOKENIZERS,
     SUPPORTED_SUMMARIZERS,

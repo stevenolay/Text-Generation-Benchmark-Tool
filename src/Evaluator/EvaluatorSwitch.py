@@ -5,7 +5,7 @@ from .EvaluatorLibrary import fetchEvaluators
 
 from tqdm import tqdm
 
-from utils import (
+from tools.utils import (
     TemporaryDirectory,
     fileLen
 )
