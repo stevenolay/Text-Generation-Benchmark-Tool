@@ -1,11 +1,12 @@
 import configparser
 import json
+import csv
 import glob
 import os
 import codecs
 from SRO import SummaryReaderObject
 from tqdm import tqdm
-
+from plot import plotTable
 from utils import (
     fileLen,
     createFolderIfNotExists,
@@ -137,6 +138,18 @@ class benchmark:
                 'summarizer_name': {
                     'file_path_to_sample': set([0,8])
                                     // set of indices unsuccesfully summarized
+                }
+            }
+        '''
+        self.reportTree = defaultdict(dict)
+        '''
+            {
+                'dataset':{
+                    'corpus':{
+                        'summarizer':{
+                            'metric': report
+                        }
+                    }
                 }
             }
         '''
@@ -340,38 +353,33 @@ class benchmark:
 
         if self.evaluationEnabled:
             self.runEvaluations()
+            self.plotReport()
 
     def runEvaluations(self):
-        corporaReports = []
-        for dataSet in self.dataSetToCorpusFilesMap:
-            corpusReports = self.evaluateDataSet(dataSet)
-            corporaReports.extend(corpusReports)
-        print(''.join(corporaReports))
+        corporaReports = {}
+        for dataset in self.dataSetToCorpusFilesMap:
+            corpusReports = self.evaluateDataSet(dataset)
+            corporaReports[dataset] = corpusReports
+
+        self.reportTree = corporaReports
 
     def evaluateDataSet(self, dataset):
         corpusFilePaths = self.dataSetToCorpusFilesMap[dataset]
-        corpusReports = ['\nReport for Dataset:\t{0}\n'.format(dataset)]
+        corpusReports = {}
         for corpus in corpusFilePaths:
-            corpusReports.append(
-                '\n\tReporting for Corpus: {0}'.format(corpus)
-            )
             report = self.evaluateCorpusPerSummarizer(corpus)
-            corpusReports.extend(['\n\t\t', report])
+            corpusReports[corpus] = report
         return corpusReports
 
     def evaluateCorpusPerSummarizer(self, corpusFilepath):
         goldPath = self.generateCorpusGoldFilePath(corpusFilepath)
 
-        summarizerReports = []
+        summarizerReports = {}
         for summarizerKey in self.summarizers:
             LOGGER.info(
                 'Evaluating Results for Corpus: %s using summarizer: %s',
                 corpusFilepath,
                 summarizerKey
-            )
-
-            summarizerReports.append(
-                '\n\t\tSummarizer: {0}\n\t\t\t'.format(summarizerKey)
             )
 
             summaryPath = self.\
@@ -381,16 +389,70 @@ class benchmark:
                 failedIndicies[summarizerKey.lower()][corpusFilepath]
 
             SRO = SummaryReaderObject(
-                summaryPath, goldPath, failedIndicies=failedIndicies
-            )
+                summaryPath, goldPath, failedIndicies=failedIndicies)
 
             corpusReport = ''
             corpusReport = self.evaluatorSwitch\
                 .executeAndReportEvaluatorsOnCorpus(SRO)
+            summarizerReports[summarizerKey] = corpusReport
 
-            summarizerReports.append(corpusReport)
+        return summarizerReports
 
-        return ''.join(summarizerReports)
+    def writeToCSV(self, csvList):
+        with open("results.csv", "wb") as f:
+            writer = csv.writer(f)
+            writer.writerows(csvList)
+
+    def plotReport(self):
+        '''
+        {
+            'dataset':{
+                'corpus':{
+                    'summarizer':{
+                        'metric': report
+                    }
+                }
+            }
+        }
+        '''
+        for dataset in self.reportTree:
+            corporaReportMap = self.reportTree[dataset]
+            self.plotReportPerCorpora(corporaReportMap)
+
+
+    def plotReportPerCorpora(self, corporaReportMap):
+        for corpus in corporaReportMap:
+            corpusReportMap = corporaReportMap[corpus]
+            self.plotReportPerCorpus(corpusReportMap)
+
+    def plotReportPerCorpus(self, corpusReportMap):
+        csvList = [[' ']]
+        evaluators = self.evaluators
+        evaluators.sort()
+        csvList[0].extend(evaluators)
+
+        for summarizer in corpusReportMap:
+            summarizerReportMap = corpusReportMap[summarizer]
+            csvLine = self.summarizerReportMapToCSVFormat(summarizer,
+                summarizerReportMap)
+            csvList.append(csvLine)
+
+        self.writeToCSV(csvList)
+        plotTable("results.csv")
+
+
+    def summarizerReportMapToCSVFormat(self, summarizer, summarizerReportMap):
+        evaluators = self.evaluators
+        evaluators.sort()
+
+        csvLineList = [summarizer]
+        for evaluator in evaluators:
+            metric = evaluator.lower()
+            metricResult = summarizerReportMap[metric]
+            csvLineList.append(metricResult)
+        return csvLineList
+
+
 
 benchmarkInstance = benchmark()
 benchmarkInstance.runBenchmarking()
