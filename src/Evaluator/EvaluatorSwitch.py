@@ -34,16 +34,16 @@ class EvaluatorSwitch(object):
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
         #assert str(type(SRO)) == "<class 'SRO.SummaryReaderObject'>"
 
-        evaluatorReportsForCorpus = []
+        evaluatorReportsForCorpus = {}
         currSRO = SRO
         for evaluator in self.evaluationLibrary:
-            report = self._toggleAndExecuteEvaluator(
+            result = self._toggleAndExecuteEvaluator(
                 evaluator, currSRO)
             currSRO = currSRO.copy()
 
-            evaluatorReportsForCorpus.extend(report)
+            evaluatorReportsForCorpus[evaluator] = result
 
-        return ''.join(evaluatorReportsForCorpus)
+        return evaluatorReportsForCorpus
 
     def _toggleAndExecuteEvaluator(self, evaluatorKey, SRO):
         functions = self.functionMap
@@ -73,13 +73,7 @@ class EvaluatorSwitch(object):
 
         avg = float(sumScores) / float(numSamples)
 
-        report = [
-            '\n\t\t\tThis is the result of the Meteor Score:\n\t\t\t\t',
-            str(avg),
-            '\n'
-        ]
-
-        return report
+        return avg
 
     def _rougeScore(self, SRO):
         LOGGER.info('Calculating Rouge Score:')
@@ -114,13 +108,7 @@ class EvaluatorSwitch(object):
                         for k in sumRougel if numSamples > 0}
         }
 
-        report = [
-            '\n\t\t\tThis is the result of the Rogue Score:\n\t\t\t\t',
-            str(avg),
-            '\n'
-        ]
-
-        return report
+        return avg
 
     def _pyRouge(self, SRO):
         LOGGER.info('Calculating pyRouge score:')
@@ -132,8 +120,8 @@ class EvaluatorSwitch(object):
         if len(failures) == readerLength:
             # No summaries were successful
             return [
-                '\n\t\t\tThe pyRouge score could not be calculated. No'
-                ' summaries were succesfully generated:\n\t\t\t\t',
+                'The pyRouge score could not be calculated. No'
+                ' summaries were succesfully generated.',
             ]
 
         with TemporaryDirectory() as temp_dir:
@@ -167,10 +155,5 @@ class EvaluatorSwitch(object):
 
             output = rouge.convert_and_evaluate()
 
-        report = [
-            '\n\t\t\tThis is the result of the pyRogue Score:\n\t\t\t\t',
-            str(output.replace('\n', '\n\t\t\t\t')),
-            '\n'
-        ]
 
-        return report
+        return output
