@@ -71,7 +71,8 @@ class EvaluatorSwitch(object):
             sumScores += score
             numSamples += 1
 
-        avg = float(sumScores) / float(numSamples)
+        avg = (float(sumScores) / float(numSamples)) if readerLength \
+            else 0.0
 
         return avg
 
