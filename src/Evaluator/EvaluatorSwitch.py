@@ -28,7 +28,7 @@ class EvaluatorSwitch(object):
         }
         self.functionMap = dict(
             (k.lower(), v)
-            for k,v in self.functionMap .iteritems()
+            for k,v in self.functionMap.items()
         )
 
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
