@@ -1,7 +1,13 @@
+'''
 import plotly as py
-import plotly.figure_factory
 py.offline.init_notebook_mode()
-from plotly.tools import FigureFactory as ff
+'''
+
+import plotly.figure_factory
+import plotly.offline
+import plotly.graph_objs as go
+
+
 import pandas as pd
 import os
 
@@ -13,7 +19,7 @@ def plotTable(file):
 
     plotFileName = '{0}.html'.format(resultsFileName)
     filename = os.path.join(resultsFilePath, plotFileName)
-    py.offline.plot(table, filename=filename)
+    plotly.offline.plot(table, filename=filename)
 
 '''
 plotTable('results.csv')
