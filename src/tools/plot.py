@@ -1,5 +1,4 @@
 import plotly as py
-import plotly.graph_objs as go
 import plotly.figure_factory
 py.offline.init_notebook_mode()
 from plotly.tools import FigureFactory as ff
