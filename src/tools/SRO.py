@@ -24,8 +24,8 @@ class SummaryReaderObject:
             if ('failedIndicies' in kwargs) else set()
         self.kwargs['failedIndicies'] = self.failedIndicies
 
-        self.length = self._fileLen(goldFilePath)
-
+        self.goldLength = self._fileLen(goldFilePath)
+        self.length = self._fileLen(summaryFilePath)
         self.indexOfFileReader = 0
 
     def __len__(self):
