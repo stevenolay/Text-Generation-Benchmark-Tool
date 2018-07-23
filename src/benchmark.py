@@ -448,7 +448,7 @@ class benchmark:
             self.plotReportPerCorpus(corpusReportMap)
 
     def plotReportPerCorpus(self, corpusReportMap):
-        csvList = [[' ']]
+        csvList = [['Summarizer']]
         evaluators = self.evaluators
         evaluators.sort()
         csvList[0].extend(evaluators)
