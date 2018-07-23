@@ -420,7 +420,7 @@ class benchmark:
                 currDatetime
             )
         )
-        with codecs.open(pathToResults, "wb") as f:
+        with codecs.open(pathToResults, "w") as f:
             writer = csv.writer(f)
             writer.writerows(csvList)
         return pathToResults
