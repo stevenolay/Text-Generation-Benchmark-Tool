@@ -65,7 +65,7 @@ class SummaryReaderObject:
         )
 
     def readOne(self):
-        if self.indexOfFileReader > self.length - 1:
+        if self.indexOfFileReader > self.goldLength - 1:
             return None
         try:
             references = self._readReferences()
