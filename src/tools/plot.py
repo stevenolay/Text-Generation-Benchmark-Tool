@@ -10,9 +10,9 @@ import codecs
 from collections import defaultdict
 from datetime import datetime
 
-import pandas as pd
+#import pandas as pd
 
-import numpy as np
+#import numpy as np
 # import matplotlib.pyplot as plt
 
 # from matplotlib.backends.backend_pdf import PdfPages
@@ -20,9 +20,9 @@ import numpy as np
 # The PDF document
 # pdf_pages = PdfPages('my-fancy-document.pdf')
 
-import seaborn as sns
-sns.set_context("talk")
-sns.set_style("white")
+#import seaborn as sns
+#sns.set_context("talk")
+#sns.set_style("white")
 
 def plotTable(file):
     pass
