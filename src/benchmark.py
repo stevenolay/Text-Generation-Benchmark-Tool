@@ -7,7 +7,7 @@ import codecs
 from tools.SRO import SummaryReaderObject
 from datetime import datetime
 from tqdm import tqdm
-from tools.plot import plotTable
+from tools.plot import plotTable, plotSystemsCorpusPerMetric
 from tools.utils import (
     fileLen,
     createFolderIfNotExists,
@@ -364,7 +364,7 @@ class benchmark:
 
         if self.evaluationEnabled:
             self.runEvaluations()
-            self.plotReport()
+            self.generatePlots()
 
     def runEvaluations(self):
         corporaReports = {}
@@ -425,6 +425,14 @@ class benchmark:
             writer.writerows(csvList)
         return pathToResults
 
+    def generatePlots(self):
+        #  self.plotReport()
+        reportTree = self.reportTree
+        summarizers = self.summarizers
+        metrics = self.evaluators
+        plotSystemsCorpusPerMetric(summarizers, metrics, reportTree)
+        return
+
     def plotReport(self):
         '''
         {
@@ -441,7 +449,6 @@ class benchmark:
             corporaReportMap = self.reportTree[dataset]
             self.plotReportPerCorpora(corporaReportMap)
 
-
     def plotReportPerCorpora(self, corporaReportMap):
         for corpus in corporaReportMap:
             corpusReportMap = corporaReportMap[corpus]
@@ -455,13 +462,13 @@ class benchmark:
 
         for summarizer in corpusReportMap:
             summarizerReportMap = corpusReportMap[summarizer]
-            csvLine = self.summarizerReportMapToCSVFormat(summarizer,
+            csvLine = self.summarizerReportMapToCSVFormat(
+                summarizer,
                 summarizerReportMap)
             csvList.append(csvLine)
 
         pathToCSV = self.writeToCSV(csvList)
         plotTable(pathToCSV)
-
 
     def summarizerReportMapToCSVFormat(self, summarizer, summarizerReportMap):
         evaluators = self.evaluators
@@ -473,7 +480,6 @@ class benchmark:
             metricResult = summarizerReportMap[metric]
             csvLineList.append(metricResult)
         return csvLineList
-
 
 
 benchmarkInstance = benchmark()
