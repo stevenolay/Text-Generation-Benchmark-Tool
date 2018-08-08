@@ -1,7 +1,7 @@
 from .utils import createFolderIfNotExists
 from datetime import datetime
-import plotly.figure_factory
-import plotly.offline
+# import plotly.figure_factory
+# import plotly.offline
 import json
 
 import os
@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-from matplotlib.backends.backend_pdf import PdfPages
+# from matplotlib.backends.backend_pdf import PdfPages
 
 # The PDF document
 # pdf_pages = PdfPages('my-fancy-document.pdf')
@@ -24,6 +24,10 @@ import seaborn as sns
 sns.set_context("talk")
 sns.set_style("white")
 
+def plotTable(file):
+    pass
+
+'''
 def plotTables(files):
     for file in files:
         plotTable(file)
@@ -39,7 +43,7 @@ def plotTable(file):
     filename = os.path.join(resultsFilePath, plotFileName)
     plotly.offline.plot(table, filename=filename)
 
-
+'''
 '''
 plotTable('results.csv')
 "https://raw.githubusercontent.com/plotly/datasets/master/school_earnings.csv"
