@@ -13,7 +13,7 @@ from datetime import datetime
 import pandas as pd
 
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # from matplotlib.backends.backend_pdf import PdfPages
 
@@ -172,6 +172,7 @@ def systemsCorpusFormatter(metrics, corpFlatForm):
 # make_rectangle_figure(6.5, save=True)
 #{'meteor': defaultdict(<class 'list'>, {'smmrRE': [0.1685136779914727, 0.16609769748922398], 'sumyLSA': [0.15616787138883312, 0.16833631757488907]})}
 
+'''
 class plotFormatter:
     def __init__(self, corpora, systemsCorpusFormatByMetric):
         self.defaultFontSize = 12
@@ -326,7 +327,7 @@ class plotFormatter:
             method = self.plotMap[metric]
             systemsCorpusFormat = systemsCorpusFormatByMetric[metric]
             method(systemsCorpusFormat)
-
+'''
 '''
 plt.savefig("figs/illustrator/"+str(value)+"bar.pdf",
             format='pdf',
