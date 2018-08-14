@@ -1,13 +1,13 @@
 import configparser
 import json
-import csv
+
 import glob
 import os
 import codecs
 from tools.SRO import SummaryReaderObject
-from datetime import datetime
+
 from tqdm import tqdm
-from tools.plot import plotTable, plotSystemsCorpusPerMetric
+from tools.plot import plotFormatter, csvPlotter
 from tools.utils import (
     fileLen,
     createFolderIfNotExists,
@@ -15,6 +15,7 @@ from tools.utils import (
 )
 
 from collections import defaultdict
+from datetime import datetime
 
 from Summarizer.SummarizerLibrary import fetchSummarizers
 from Summarizer.SummarizerSwitch import SummarizerSwitch
@@ -38,7 +39,8 @@ LOG_FILENAME = 'allLogs.log'
 logging.basicConfig(format=FORMAT,
                     level=logging.DEBUG,
                     filename=LOG_FILENAME)
-LOGGER = logging.getLogger()
+logging.error('So should this')
+LOGGER = logging.getLogger(__name__)
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
 os.chdir(dirname)  # Change the current working directory
@@ -364,6 +366,7 @@ class benchmark:
 
         if self.evaluationEnabled:
             self.runEvaluations()
+            self.cacheReportTree()
             self.generatePlots()
 
     def runEvaluations(self):
@@ -409,77 +412,41 @@ class benchmark:
 
         return summarizerReports
 
-    def writeToCSV(self, csvList):
-        resultsPath = os.path.join('..', 'results')
-        createFolderIfNotExists(resultsPath)
-
-        currDatetime = str(datetime.now())
-        pathToResults = os.path.join(
-            resultsPath,
-            "results_{0}.csv".format(
-                currDatetime
-            )
-        )
-        with codecs.open(pathToResults, "w") as f:
-            writer = csv.writer(f)
-            writer.writerows(csvList)
-        return pathToResults
-
     def generatePlots(self):
-        #  self.plotReport()
+        self.drawCSVs()
+        self.drawFigs()
+
+    def drawCSVs(self):
+        evaluators = self.evaluators
+        reportTree = self.reportTree
+        summarizers = self.summarizers
+
+        cP = csvPlotter(summarizers, evaluators, reportTree)
+        cP.plot()
+        cP.plotMetrics()
+
+    def drawFigs(self):
         reportTree = self.reportTree
         summarizers = self.summarizers
         metrics = self.evaluators
-        plotSystemsCorpusPerMetric(summarizers, metrics, reportTree)
-        return
 
-    def plotReport(self):
-        '''
-        {
-            'dataset':{
-                'corpus':{
-                    'summarizer':{
-                        'metric': report
-                    }
-                }
-            }
-        }
-        '''
-        for dataset in self.reportTree:
-            corporaReportMap = self.reportTree[dataset]
-            self.plotReportPerCorpora(corporaReportMap)
+        pF = plotFormatter(summarizers, metrics, reportTree)
+        pF.draw()
 
-    def plotReportPerCorpora(self, corporaReportMap):
-        for corpus in corporaReportMap:
-            corpusReportMap = corporaReportMap[corpus]
-            self.plotReportPerCorpus(corpusReportMap)
+    def cacheReportTree(self):
+        reportTree = self.reportTree
+        currDatetime = str(datetime.now())
 
-    def plotReportPerCorpus(self, corpusReportMap):
-        csvList = [['Summarizer']]
-        evaluators = self.evaluators
-        evaluators.sort()
-        csvList[0].extend(evaluators)
+        reportTreeCacheLocation = os.path.join(
+            '..', 'cache',
+            '{0}_report_tree.txt'.format(currDatetime))
 
-        for summarizer in corpusReportMap:
-            summarizerReportMap = corpusReportMap[summarizer]
-            csvLine = self.summarizerReportMapToCSVFormat(
-                summarizer,
-                summarizerReportMap)
-            csvList.append(csvLine)
+        cacheFolder = os.path.split(reportTreeCacheLocation)[0]
+        createFolderIfNotExists(cacheFolder)
 
-        pathToCSV = self.writeToCSV(csvList)
-        plotTable(pathToCSV)
-
-    def summarizerReportMapToCSVFormat(self, summarizer, summarizerReportMap):
-        evaluators = self.evaluators
-        evaluators.sort()
-
-        csvLineList = [summarizer]
-        for evaluator in evaluators:
-            metric = evaluator.lower()
-            metricResult = summarizerReportMap[metric]
-            csvLineList.append(metricResult)
-        return csvLineList
+        with codecs.open(reportTreeCacheLocation,
+                         'w', 'utf-8') as f:
+            f.write('{0}'.format(json.dumps(reportTree)))
 
 
 benchmarkInstance = benchmark()
