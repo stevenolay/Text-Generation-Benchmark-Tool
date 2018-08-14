@@ -26,3 +26,5 @@ sumy == 0.7.0
 # Evaluator/EvaluatorSwitch.py: 6
 # benchmark.py: 7
 tqdm == 4.23.4
+
+pyrouge
