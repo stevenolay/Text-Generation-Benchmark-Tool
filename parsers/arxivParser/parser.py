@@ -20,7 +20,7 @@ def parse(testLocation):
                     abstractTextList = lineJSON['abstract_text']
                     formattedAbstract = formatAbstract(abstractTextList)
                     abst.write('{0}\n'.format(formattedAbstract))
-
+                    break
                     line = src.readline()
 
                 samp.seek(-1, os.SEEK_END)
