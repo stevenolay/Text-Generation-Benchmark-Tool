@@ -38,6 +38,7 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
 ```python
     >>> import nltk
     >>> nltk.download('stopwords')
+    >>> nltk.download('punkt')
 ```
 
 ### <a name="supported_s"></a> Supported Summarizers
