@@ -1,10 +1,6 @@
 from .SummarizerLibrary import sumyKeys as SUMY_KEYS
-import logging
-
-FORMAT = '%(asctime)-15s %(message)s'
-logging.basicConfig(format=FORMAT,
-                    level=logging.DEBUG)
-LOGGER = logging.getLogger()
+from tools.logger import Logger
+LOGGER = Logger.getInstance()
 
 
 class SummarizerSwitch(object):
@@ -28,7 +24,7 @@ class SummarizerSwitch(object):
 
         self.functionMap = dict(
             (k.lower(), v)
-            for k,v in self.functionMap.items()
+            for k, v in self.functionMap.items()
         )
 
     def joinTokenizedSentences(self, text):
