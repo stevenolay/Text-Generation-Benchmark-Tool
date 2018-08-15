@@ -1,6 +1,7 @@
 from rouge import Rouge
 from pyrouge import Rouge155
 from .evaluator_source_files.Meteor.Meteor import Meteor
+from .evaluator_source_files.bleu import compute_bleu
 
 
 def fetchEvaluators(enabledEvaluators):
@@ -18,7 +19,8 @@ def fetchEvaluators(enabledEvaluators):
     EVALUATORS = {
         'rouge': Rouge(),
         'pyrouge': Rouge155,
-        'meteor': Meteor()
+        'meteor': Meteor(),
+        'bleu': compute_bleu
     }
 
     desiredEvaluators = dict(

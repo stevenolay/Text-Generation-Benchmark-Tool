@@ -6,34 +6,29 @@ from .EvaluatorLibrary import fetchEvaluators
 from tqdm import tqdm
 
 from tools.utils import (
-    TemporaryDirectory,
-    fileLen
+    TemporaryDirectory
 )
 
-import logging
-
-FORMAT = '%(asctime)-15s %(message)s'
-logging.basicConfig(format=FORMAT,
-                    level=logging.DEBUG)
-LOGGER = logging.getLogger()
+from tools.logger import Logger
+LOGGER = Logger.getInstance()
 
 
 class EvaluatorSwitch(object):
-    def __init__(self, evaluators):
+    def __init__(self, evaluators, tokenizer):
+        self.tokenizer = tokenizer
         self.evaluationLibrary = fetchEvaluators(evaluators)
         self.functionMap = {
             'rouge': self._rougeScore,
             'pyrouge': self._pyRouge,
-            'meteor': self._meteor
+            'meteor': self._meteor,
+            'bleu': self._bleu
         }
         self.functionMap = dict(
             (k.lower(), v)
-            for k,v in self.functionMap.items()
+            for k, v in self.functionMap.items()
         )
 
     def executeAndReportEvaluatorsOnCorpus(self, SRO):
-        #assert str(type(SRO)) == "<class 'SRO.SummaryReaderObject'>"
-
         evaluatorReportsForCorpus = {}
         currSRO = SRO
         for evaluator in self.evaluationLibrary:
@@ -56,8 +51,38 @@ class EvaluatorSwitch(object):
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
 
+    def _bleu(self, SRO):
+        tokenizer = self.tokenizer
+        LOGGER.info('Calculating BLEU Score:')
+        bleu = self.evaluationLibrary['bleu']
+
+        readerLength = len(SRO)
+        numSamples = 0
+        sumScores = 0.0
+        for i in tqdm(range(readerLength)):
+            hypothesis, references = SRO.readOne()
+
+            hypothesisTokens = tokenizer.word_tokenize(hypothesis)
+
+            referenceTokensLists = [
+                tokenizer.word_tokenize(sentence)
+                for reference in references
+                for sentence in tokenizer.sent_tokenize(reference)
+            ]
+
+            scores = bleu(hypothesisTokens, referenceTokensLists)
+            bleuScore = scores[0]
+
+            sumScores += bleuScore
+            numSamples += 1
+
+        avg = (float(sumScores) * 100 / float(numSamples)) if readerLength \
+            else 0.0
+
+        return avg
+
     def _meteor(self, SRO):
-        LOGGER.info('Calculating Meteor Score:')
+        LOGGER.info('Calculating METEOR Score:')
 
         meteor = self.evaluationLibrary['meteor']
 
@@ -71,7 +96,7 @@ class EvaluatorSwitch(object):
             sumScores += score
             numSamples += 1
 
-        avg = (float(sumScores) / float(numSamples)) if readerLength \
+        avg = (float(sumScores) * 100 / float(numSamples)) if readerLength \
             else 0.0
 
         return avg
@@ -101,11 +126,11 @@ class EvaluatorSwitch(object):
                 numSamples += 1
 
         avg = {
-            'rouge-1': {k: float(sumRouge1[k]) / float(numSamples)
+            'rouge-1': {k: float(sumRouge1[k]) * 100 / float(numSamples)
                         for k in sumRouge1 if numSamples > 0},
-            'rouge-2': {k: float(sumRouge2[k]) / float(numSamples)
+            'rouge-2': {k: float(sumRouge2[k]) * 100 / float(numSamples)
                         for k in sumRouge2 if numSamples > 0},
-            'rouge-l': {k: float(sumRougel[k]) / float(numSamples)
+            'rouge-l': {k: float(sumRougel[k]) * 100 / float(numSamples)
                         for k in sumRougel if numSamples > 0}
         }
 
@@ -155,6 +180,5 @@ class EvaluatorSwitch(object):
             rouge.model_filename_pattern = '#ID#.\d+.txt'
 
             output = rouge.convert_and_evaluate()
-
 
         return output
