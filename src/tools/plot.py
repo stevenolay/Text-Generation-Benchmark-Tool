@@ -1,4 +1,4 @@
-from .utils import createFolderIfNotExists
+from tools.utils import createFolderIfNotExists
 from datetime import datetime
 import plotly.figure_factory
 import plotly.offline
@@ -145,12 +145,14 @@ class csvPlotter:
     def writeCSVs(self, CSVs):
         csvFilePaths = []
         metrics = self.evaluators
-        for metric in metrics:
+        for i in range(len(metrics)):
+            metric = metrics[i]
             metric = metric.lower()
-            csvFilePaths.extend([
+            csvList = CSVs[i]
+
+            csvFilePaths.append(
                 self.writeToCSV(csvList, '{0}_system_corpus'.format(metric))
-                for csvList in CSVs
-            ])
+            )
 
         return csvFilePaths
 
@@ -189,9 +191,9 @@ class csvPlotter:
         '''
         for corpus in corporaReportMap:
             corpusReportMap = corporaReportMap[corpus]
-            self.plotReportPerCorpus(corpusReportMap)
+            self.plotReportPerCorpus(corpus, corpusReportMap)
 
-    def plotReportPerCorpus(self, corpusReportMap):
+    def plotReportPerCorpus(self, corpusFilePath, corpusReportMap):
         '''
         corpusReportMap
         {
@@ -205,6 +207,8 @@ class csvPlotter:
         evaluators.sort()
         csvList[0].extend(evaluators)
 
+        corpusFileName = os.path.split(corpusFilePath)[1]
+
         for summarizer in corpusReportMap:
             summarizerReportMap = corpusReportMap[summarizer]
             csvLine = self.summarizerReportMapToCSVFormat(
@@ -212,7 +216,7 @@ class csvPlotter:
                 summarizerReportMap)
             csvList.append(csvLine)
 
-        pathToCSV = self.writeToCSV(csvList)
+        pathToCSV = self.writeToCSV(csvList, corpusFileName)
         self.plotTable(pathToCSV)
 
     def plotTables(self, filePaths):
@@ -299,7 +303,8 @@ class plotFormatter:
 
         self.cacheSystemsCorpusFormat()
         self.plotMap = {
-            'meteor': self.drawMeteorPlot,
+            'meteor': self.drawNumericPlot('meteor'),
+            'bleu': self.drawNumericPlot('bleu'),
             'rouge': self.drawRougePlot
         }
 
@@ -321,67 +326,77 @@ class plotFormatter:
                 '{0}\n{1}'
                 .format(list(corpora), json.dumps(systemsCorpusFormat)))
 
-    def drawMeteorPlot(self, systemsCorpusFormat, pdf):
-        corpora = self.corpora
-        corpora = [os.path.split(corp)[1] for corp in corpora]
+    def drawNumericPlot(self, metricName):
+        '''
+        Used for any metrics that are sinle integers. Multi-value
+        plots require more specialized formatting.
+        '''
+        metricName = metricName.upper()
 
-        plt.figure(figsize=(12, 8))
-        ax = plt.subplot(111)
-        count = 0
+        def plot(systemsCorpusFormat, pdf):
+            corpora = self.corpora
+            corpora = [os.path.split(corp)[1] for corp in corpora]
 
-        numCorpora = len(corpora)
+            plt.figure(figsize=(12, 8))
+            ax = plt.subplot(111)
+            count = 0
 
-        indexes = np.arange(numCorpora)
+            numCorpora = len(corpora)
 
-        numSummarizers = len(systemsCorpusFormat.keys())
-        palette = sns.color_palette("Paired", numSummarizers).as_hex()
+            indexes = np.arange(numCorpora)
 
-        arbitraySizeThreshold = 0.8
-        barWidth = arbitraySizeThreshold / numSummarizers
-        count = 0
-        for summarizer in systemsCorpusFormat:
-            values = systemsCorpusFormat[summarizer]
-            ax.barh(
-                indexes + (barWidth * count),
-                values,
-                barWidth, align='center',
-                label=summarizer, color=palette[count])
+            numSummarizers = len(systemsCorpusFormat.keys())
+            palette = sns.color_palette("Paired", numSummarizers).as_hex()
 
-            count += 1
+            arbitraySizeThreshold = 0.8
+            barWidth = arbitraySizeThreshold / numSummarizers
+            count = 0
+            for summarizer in systemsCorpusFormat:
+                values = systemsCorpusFormat[summarizer]
+                ax.barh(
+                    indexes + (barWidth * count),
+                    values,
+                    barWidth, align='center',
+                    label=summarizer, color=palette[count])
 
-        plt.title(
-            "{0} Metric Score for each System Sorted by Corpus".
-            format('METEOR'))
+                count += 1
 
-        handles, labels = ax.get_legend_handles_labels()
+            plt.title(
+                "{0} Metric Score for each System Sorted by Corpus".
+                format(metricName))
 
-        ax.legend(
-            handles=reversed(handles),
-            labels=reversed(labels),
-            bbox_to_anchor=(1.05, .95))
+            handles, labels = ax.get_legend_handles_labels()
 
-        plt.ylabel('Corpora')
-        plt.xlabel('{0} Score'.format('METEOR'))
+            ax.legend(
+                handles=reversed(handles),
+                labels=reversed(labels),
+                bbox_to_anchor=(1.05, .95))
 
-        locations = [
-            ind + (1.0 / 2.0 * arbitraySizeThreshold)
-            for ind in indexes]
-        plt.yticks(locations, corpora)
-        sns.despine()
+            plt.ylabel('Corpora')
+            plt.xlabel('{0} Score'.format(metricName))
 
-        plt.savefig(
-            "../figs/illustrator/" +
-            str(datetime.now()) +
-            '_' +
-            "meteor_bar.pdf",
-            format='pdf',
-            bbox_inches='tight',
-            pad_inches=.1)
+            locations = [
+                ind + (1.0 / 2.0 * arbitraySizeThreshold)
+                for ind in indexes]
+            plt.yticks(locations, corpora)
+            sns.despine()
 
-        pdf.savefig(
-            plt.gcf(),
-            bbox_inches='tight',
-            pad_inches=.1)
+            plt.savefig(
+                "../figs/illustrator/" +
+                str(datetime.now()) +
+                '_' +
+                metricName +
+                "_bar.pdf",
+                format='pdf',
+                bbox_inches='tight',
+                pad_inches=.1)
+
+            pdf.savefig(
+                plt.gcf(),
+                bbox_inches='tight',
+                pad_inches=.1)
+
+        return plot
 
     def drawRougePlot(self, systemsCorpusFormat, pdf):
         self.drawRougeFScoreSummary(systemsCorpusFormat, pdf)
