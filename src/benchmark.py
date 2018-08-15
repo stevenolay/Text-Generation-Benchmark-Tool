@@ -32,20 +32,15 @@ from tools.defaults import (
     DEFAULT_SENTENCE_COUNT
 )
 
-import logging
-
-FORMAT = '%(asctime)-15s %(message)s'
-LOG_FILENAME = 'allLogs.log'
-logging.basicConfig(format=FORMAT,
-                    level=logging.DEBUG,
-                    filename=LOG_FILENAME)
-logging.error('So should this')
-LOGGER = logging.getLogger(__name__)
+from tools.logger import Logger
+from tools.tokenizer import Tokenizer
 
 dirname, filename = os.path.split(os.path.abspath(__file__))
 os.chdir(dirname)  # Change the current working directory
 # to the directory of the script. All file loads are relative
 # to the script directory.
+
+LOGGER = Logger.getInstance()
 
 try:  # Used for Python 2 compatibility
     import sys
@@ -68,7 +63,6 @@ class benchmark:
             'data_folders',
             expect_list=True)
 
-        self.subsetsEnabled = False
         # Load Seperators
         textSeperator = self.fetchSeperator('text_seperator')
         self.textSeperator = textSeperator if textSeperator \
@@ -101,6 +95,7 @@ class benchmark:
         tokenizer = self.fetchSettingByKey('tokenizer')
         self.validateOption(tokenizer, SUPPORTED_TOKENIZERS)
         self.tokenizer = tokenizer if tokenizer else DEFAULT_TOKENIZER
+        self.tokenizer = Tokenizer(self.tokenizer)
 
         # Load Evaluation Systems
         evaluationSystems = self.fetchSettingByKey(
@@ -125,7 +120,7 @@ class benchmark:
         self.summarizerSwitch = SummarizerSwitch(self)
 
         # load evaluators
-        self.evaluatorSwitch = EvaluatorSwitch(evaluators)
+        self.evaluatorSwitch = EvaluatorSwitch(evaluators, self.tokenizer)
 
         sentenceCount = self.fetchSettingByKey('sentence_count')
         self.sentenceCount = int(sentenceCount) if sentenceCount \
@@ -168,6 +163,7 @@ class benchmark:
 
         '''
 
+    #  Setup and Configuration Functions
     def walkDataCorporaFolders(self):
         dataFolders = self.dataFolders
 
@@ -256,6 +252,7 @@ class benchmark:
 
         return decodedSeperator
 
+    #  Summarization Methods
     def runSummarizations(self, summarizerKey):
         corpusFilePaths = self.corpusFilepaths
         for filepath in corpusFilePaths:
@@ -358,17 +355,7 @@ class benchmark:
 
         return corpusGoldFilePath
 
-    def runBenchmarking(self):
-        summarizerLibrary = self.summarizerLibrary
-
-        for key in summarizerLibrary:
-            self.runSummarizations(key)
-
-        if self.evaluationEnabled:
-            self.runEvaluations()
-            self.cacheReportTree()
-            self.generatePlots()
-
+    # Evaluation Methods #
     def runEvaluations(self):
         corporaReports = {}
         for dataset in self.dataSetToCorpusFilesMap:
@@ -412,6 +399,7 @@ class benchmark:
 
         return summarizerReports
 
+    #  Plotting Methods
     def generatePlots(self):
         self.drawCSVs()
         self.drawFigs()
@@ -433,6 +421,7 @@ class benchmark:
         pF = plotFormatter(summarizers, metrics, reportTree)
         pF.draw()
 
+    # Cache Methods
     def cacheReportTree(self):
         reportTree = self.reportTree
         currDatetime = str(datetime.now())
@@ -448,6 +437,19 @@ class benchmark:
                          'w', 'utf-8') as f:
             f.write('{0}'.format(json.dumps(reportTree)))
 
+    # Main Function
+    def runBenchmarking(self):
+        summarizerLibrary = self.summarizerLibrary
 
-benchmarkInstance = benchmark()
-benchmarkInstance.runBenchmarking()
+        for key in summarizerLibrary:
+            self.runSummarizations(key)
+
+        if self.evaluationEnabled:
+            self.runEvaluations()
+            self.cacheReportTree()
+            self.generatePlots()
+
+
+if __name__ == "__main__":
+    benchmarkInstance = benchmark()
+    benchmarkInstance.runBenchmarking()
