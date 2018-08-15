@@ -32,6 +32,7 @@ $ cd Summarization-Benchmark-Tool
 ### <a name="installing"></a> Installing dependencies
 ```
 $ pip install -r requirements.txt
+$ python -m spacy download en
 ```
 Some summarizers require the NLTK tokenizer which has an extra build step:
 
