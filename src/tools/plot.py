@@ -20,6 +20,7 @@ import seaborn as sns
 sns.set_context("talk")
 sns.set_style("white")
 
+createFolderIfNotExists("../figs")
 
 class reportTreeReformatter:
 
@@ -120,6 +121,35 @@ class csvPlotter:
             self.reportTreeReformatter\
                 .reportTreeToSystemsCorpusFormat()
 
+        self.subHeaderFormats = {
+            'rouge': [
+                'ROUGE 1-F', 'ROUGE 1-R', 'ROUGE 1-P',
+                'ROUGE 2-F', 'ROUGE 2-R', 'ROUGE 2-P',
+                'ROUGE L-F', 'ROUGE L-R', 'ROUGE L-P'
+            ],
+            'pyrouge': [
+                'ROUGE 1-F', 'ROUGE 1-R', 'ROUGE 1-P',
+                'ROUGE 2-F', 'ROUGE 2-R', 'ROUGE 2-P',
+                'ROUGE L-F', 'ROUGE L-R', 'ROUGE L-P'
+            ]
+        }
+
+        self.paddingSize = {
+            'rouge': {
+                'left': 0,
+                'right': 8
+            },
+            'pyrouge': {
+                'left': 0,
+                'right': 8
+            }
+        }
+
+        self.metricResultReformatters = {
+            'rouge': self._reformatRouge,
+            'pyrouge': self._reformatPyRouge
+        }
+
     def plot(self):
         '''
         reportTree
@@ -163,20 +193,77 @@ class csvPlotter:
         corpusFlat = self.reportTreeReformatter.reportTreeFlattenedByCorpus
         allCSVLists = []
 
-        header = ['System']
-        header.extend(corpusFlat.keys())
+        corpora = corpusFlat.keys()
 
         for metric in metrics:
             metric = metric.lower()
-            csvList = [header]
+
+            header = self.constructHeader(metric, corpora)
+            subHeader = self.constructSubHeader(metric, corpora)
+
+            csvList = [header, subHeader]
             for summarizer in summarizers:
                 results = systemsCorpusFormat[metric][summarizer]
                 csvLine = [summarizer]
+                if metric in self.metricResultReformatters:
+                    reformatter = self.metricResultReformatters[metric]
+                    reformattedResults = reformatter(results)
+                    results = reformattedResults
+
                 csvLine.extend(results)
                 csvList.append(csvLine)
             allCSVLists.append(csvList)
 
         return allCSVLists
+
+    def constructHeader(self, metric, columnTitles, empty=False):
+        header = [' '] if not empty else []
+        for title in columnTitles:
+            header.append(title.upper())
+            rightPad = self.paddingSize[metric]['right'] \
+                if metric in self.paddingSize else 0
+            [header.append(' ') for _ in range(rightPad)]
+
+        return header
+
+    def constructSubHeader(self, metric, titles, empty=False):
+        subHeader = ['System'] if not empty else []
+        subHeaderCDR = self.subHeaderFormats[metric] \
+            if metric in self.subHeaderFormats else [metric.upper()]
+
+        for title in titles:
+            subHeader.extend(subHeaderCDR)
+
+        return subHeader
+
+    def _reformatRouge(self, results):
+
+        targetRouges = ['rouge-1', 'rouge-2', 'rouge-l']
+        targetScores = ['f', 'r', 'p']
+
+        reformattedResults = [
+            result[targetRouge][targetScore]
+            for result in results
+            for targetRouge in targetRouges
+            for targetScore in targetScores
+        ]
+
+        return reformattedResults
+
+    def _reformatPyRouge(self, results):
+        targetKeys = [
+            'rouge_1_f_score', 'rouge_1_recall', 'rouge_1_precision',
+            'rouge_2_f_score', 'rouge_2_recall', 'rouge_2_precision',
+            'rouge_l_f_score', 'rouge_l_recall', 'rouge_l_precision'
+        ]
+
+        reformattedResults = [
+            float(result[targetKey]) * 100
+            for result in results
+            for targetKey in targetKeys
+        ]
+
+        return reformattedResults
 
     def plotReportPerCorpora(self, corporaReportMap):
         '''
@@ -193,6 +280,17 @@ class csvPlotter:
             corpusReportMap = corporaReportMap[corpus]
             self.plotReportPerCorpus(corpus, corpusReportMap)
 
+    def generateCorpusHeaders(self, metrics):
+        header = [' ']
+        subHeader = ['System']
+        for metric in metrics:
+            metric = metric.lower()
+            header.extend(
+                self.constructHeader(metric, [metric], True))
+            subHeader.extend(
+                self.constructSubHeader(metric, [metric], True))
+        return [header, subHeader]
+
     def plotReportPerCorpus(self, corpusFilePath, corpusReportMap):
         '''
         corpusReportMap
@@ -202,13 +300,14 @@ class csvPlotter:
             }
         }
         '''
-        csvList = [['Summarizer']]
         evaluators = self.evaluators
         evaluators.sort()
-        csvList[0].extend(evaluators)
+
+        headers = self.generateCorpusHeaders(evaluators)
+
+        csvList = headers
 
         corpusFileName = os.path.split(corpusFilePath)[1]
-
         for summarizer in corpusReportMap:
             summarizerReportMap = corpusReportMap[summarizer]
             csvLine = self.summarizerReportMapToCSVFormat(
@@ -246,8 +345,13 @@ class csvPlotter:
         csvLineList = [summarizer]
         for evaluator in evaluators:
             metric = evaluator.lower()
-            metricResult = summarizerReportMap[metric]
-            csvLineList.append(metricResult)
+            metricResult = [summarizerReportMap[metric]]
+            if metric in self.metricResultReformatters:
+                reformatter = self.metricResultReformatters[metric]
+                reformattedResult = reformatter(metricResult)
+                metricResult = reformattedResult
+
+            csvLineList.extend(metricResult)
         return csvLineList
 
     def writeToCSV(self, csvList, append=''):
@@ -257,9 +361,9 @@ class csvPlotter:
         currDatetime = str(datetime.now())
         pathToResults = os.path.join(
             resultsPath,
-            "results_{0}_{1}.csv".format(
-                currDatetime,
-                append
+            "{0}_results_{1}.csv".format(
+                append,
+                currDatetime
             )
         )
         with codecs.open(pathToResults, "w") as f:
@@ -278,7 +382,7 @@ class plotFormatter:
 
         self.pdfPath = os.path.join(
             '..',
-            'figs/illustrator/{0}_allFigs.pdf'
+            'figs/allFigs_{0}.pdf'
             .format(str(datetime.now())))
 
         self.reportTreeReformatter = reportTreeReformatter(metrics, reportTree)
@@ -305,7 +409,8 @@ class plotFormatter:
         self.plotMap = {
             'meteor': self.drawNumericPlot('meteor'),
             'bleu': self.drawNumericPlot('bleu'),
-            'rouge': self.drawRougePlot
+            'rouge': self.drawRougePlot,
+            'pyrouge': self.drawPyRougePlot
         }
 
     def cacheSystemsCorpusFormat(self):
@@ -315,7 +420,7 @@ class plotFormatter:
 
         systemsCorpusCacheLocation = os.path.join(
             '..', 'cache',
-            '{0}_systemsCorpusFormat.txt'.format(currDatetime))
+            'systemsCorpusFormat_{0}.txt'.format(currDatetime))
 
         cacheFolder = os.path.split(systemsCorpusCacheLocation)[0]
         createFolderIfNotExists(cacheFolder)
@@ -383,10 +488,10 @@ class plotFormatter:
 
             plt.savefig(
                 "../figs/illustrator/" +
+                metricName.upper() +
+                "_bar_" +
                 str(datetime.now()) +
-                '_' +
-                metricName +
-                "_bar.pdf",
+                '.pdf',
                 format='pdf',
                 bbox_inches='tight',
                 pad_inches=.1)
@@ -397,6 +502,118 @@ class plotFormatter:
                 pad_inches=.1)
 
         return plot
+
+    def drawPyRougePlot(self, systemsCorpusFormat, pdf):
+        scoreTargetsLists = [
+            ['rouge_1_f_score', 'rouge_1_recall', 'rouge_1_precision'],
+            ['rouge_2_f_score', 'rouge_2_recall', 'rouge_2_precision'],
+            ['rouge_l_f_score', 'rouge_l_recall', 'rouge_l_precision']
+        ]
+
+        targetTitles = [
+            'Pyrouge rouge-1', 'Pyrouge rouge-2', 'Pyrouge rouge-l']
+        for i in range(len(scoreTargetsLists)):
+            title = targetTitles[i]
+            scoreTargets = scoreTargetsLists[i]
+            self.drawPyRougeHelper(
+                title, scoreTargets, systemsCorpusFormat, pdf)
+
+    def drawPyRougeHelper(self, title, scoreTargets, systemsCorpusFormat, pdf):
+        plt.close('all')
+        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2)
+
+        fig.suptitle(
+            "{0}".format(title.upper()),
+            fontsize=self.largeFontSize,
+            verticalalignment='top')
+
+        ax4.set_axis_off()
+        fig.set_size_inches(16, 8)
+        axes = [ax1, ax2, ax3]
+
+        arbitraySizeThreshold = 0.8
+
+        corpora = self.corpora
+        corpora = [os.path.split(corp)[1] for corp in corpora]
+        numCorpora = len(corpora)
+        indexes = np.arange(numCorpora)
+
+        locations = [
+            ind + (1.0 / 2.0 * arbitraySizeThreshold)
+            for ind in indexes]
+
+        for i in range(len(axes)):
+            ax = axes[i]
+            scoreTarget = scoreTargets[i]
+            self.pyrouge_plot(
+                ax,
+                scoreTarget, systemsCorpusFormat,
+                arbitraySizeThreshold)
+
+            ax.set_yticks(locations, minor=False)
+            ax.set_yticklabels(corpora)
+            ax.set_ylim(-.2, 3)
+
+        handles, labels = ax3.get_legend_handles_labels()
+        ax4.legend(
+            handles=reversed(handles),
+            labels=reversed(labels),
+            bbox_to_anchor=(.50, 1.00))
+
+        sns.despine()
+
+        fig.subplots_adjust(top=0.85)
+        plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
+        plt.savefig(
+            "../figs" +
+            title.upper() +
+            "_bar_"+
+            str(datetime.now()) +
+            '.pdf',
+            format='pdf',
+            bbox_inches='tight',
+            pad_inches=.1)
+
+        pdf.savefig(
+            plt.gcf(),
+            bbox_inches='tight',
+            pad_inches=.1)
+
+    def pyrouge_plot(self, ax,
+                     scoreTarget, systemsCorpusFormat,
+                     arbitraySizeThreshold=0.8):
+
+        ax.set_xlabel(
+            '{0} Score'.format(
+                scoreTarget.upper()),
+            fontsize=self.defaultFontSize)
+        ax.set_ylabel('Corpora', fontsize=self.defaultFontSize)
+
+        ax.set_title(
+            "{0} Score"
+            .format(
+                scoreTarget.upper()),
+            fontsize=self.defaultFontSize)
+
+        corpora = self.corpora
+        numCorpora = len(corpora)
+        indexes = np.arange(numCorpora)
+
+        numSummarizers = len(systemsCorpusFormat.keys())
+        palette = sns.color_palette("Paired", numSummarizers).as_hex()
+
+        barWidth = arbitraySizeThreshold / numSummarizers
+        count = 0
+        for summarizer in systemsCorpusFormat:
+            values = systemsCorpusFormat[summarizer]
+            reformValues = [float(elem[scoreTarget]) * 100 for elem in values]
+            ax.barh(
+                indexes + (barWidth * count),
+                reformValues,
+                barWidth, align='center',
+                label=summarizer, color=palette[count])
+
+            count += 1
 
     def drawRougePlot(self, systemsCorpusFormat, pdf):
         self.drawRougeFScoreSummary(systemsCorpusFormat, pdf)
@@ -452,11 +669,11 @@ class plotFormatter:
         fig.subplots_adjust(top=0.85)
         plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
         plt.savefig(
-            "../figs/illustrator/" +
+            "../figs" +
+            targetRouge.upper() +
+            "_bar_" +
             str(datetime.now()) +
-            '_' +
-            targetRouge +
-            "_bar.pdf",
+            ".pdf",
             format='pdf',
             bbox_inches='tight',
             pad_inches=.1)
@@ -513,11 +730,11 @@ class plotFormatter:
         fig.subplots_adjust(top=0.85)
         plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
         plt.savefig(
-            "../figs/illustrator/" +
-            str(datetime.now()) +
-            '_' +
+            "../figs" +
             'rouge_f_summary' +
-            "_bar.pdf",
+            "_bar_" +
+            str(datetime.now()) +
+            ".pdf",
             format='pdf',
             bbox_inches='tight',
             pad_inches=.1)
