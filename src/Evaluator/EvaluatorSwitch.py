@@ -180,5 +180,6 @@ class EvaluatorSwitch(object):
             rouge.model_filename_pattern = '#ID#.\d+.txt'
 
             output = rouge.convert_and_evaluate()
+            output_dict = rouge.output_to_dict(output)
 
-        return output
+        return output_dict
