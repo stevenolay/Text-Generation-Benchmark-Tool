@@ -6,6 +6,9 @@ LOGGER = Logger.getInstance()
 class SummarizerSwitch(object):
     def __init__(self, benchmarkInstance):
         self.benchmark = benchmarkInstance
+        #  Refer to tools/tokenizer.py
+        self.tokenizer = benchmarkInstance.tokenizer
+
         self.summarizerLibrary = benchmarkInstance.summarizerLibrary
 
         sumyKeys = SUMY_KEYS
