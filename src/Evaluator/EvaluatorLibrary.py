@@ -2,6 +2,7 @@ from rouge import Rouge
 from pyrouge import Rouge155
 from .evaluator_source_files.Meteor.Meteor import Meteor
 from .evaluator_source_files.bleu import compute_bleu
+from .evaluator_source_files.nist import compute_nist
 
 
 def fetchEvaluators(enabledEvaluators):
@@ -20,7 +21,8 @@ def fetchEvaluators(enabledEvaluators):
         'rouge': Rouge(),
         'pyrouge': Rouge155,
         'meteor': Meteor(),
-        'bleu': compute_bleu
+        'bleu': compute_bleu,
+        'nist': compute_nist
     }
 
     desiredEvaluators = dict(

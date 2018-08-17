@@ -21,7 +21,8 @@ class EvaluatorSwitch(object):
             'rouge': self._rougeScore,
             'pyrouge': self._pyRouge,
             'meteor': self._meteor,
-            'bleu': self._bleu
+            'bleu': self._bleu,
+            'nist': self._nist
         }
         self.functionMap = dict(
             (k.lower(), v)
@@ -50,6 +51,26 @@ class EvaluatorSwitch(object):
 
         error = '{0}: Is not an available evaluator'.format(evaluatorKey)
         raise ValueError(error)
+
+    def _nist(self, SRO):
+        LOGGER.info('Calculating NIST Score:')
+        nist = self.evaluationLibrary['nist']
+
+        readerLength = len(SRO)
+        numSamples = 0
+        sumScores = 0.0
+        for i in tqdm(range(readerLength)):
+            hypothesis, references = SRO.readOne()
+
+            nistScore = nist(hypothesis, references)
+
+            sumScores += nistScore
+            numSamples += 1
+
+        avg = (float(sumScores) / float(numSamples)) if readerLength \
+            else 0.0
+
+        return avg
 
     def _bleu(self, SRO):
         tokenizer = self.tokenizer
@@ -181,5 +202,10 @@ class EvaluatorSwitch(object):
 
             output = rouge.convert_and_evaluate()
             output_dict = rouge.output_to_dict(output)
+
+            output_dict = {
+                k: (float(v) * 100)
+                for (k, v) in output_dict.items()
+            }
 
         return output_dict

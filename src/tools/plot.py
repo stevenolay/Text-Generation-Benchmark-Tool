@@ -22,6 +22,7 @@ sns.set_style("white")
 
 createFolderIfNotExists("../figs")
 
+
 class reportTreeReformatter:
 
     def __init__(self, metrics, reportTree):
@@ -258,7 +259,7 @@ class csvPlotter:
         ]
 
         reformattedResults = [
-            float(result[targetKey]) * 100
+            float(result[targetKey])
             for result in results
             for targetKey in targetKeys
         ]
@@ -409,6 +410,7 @@ class plotFormatter:
         self.plotMap = {
             'meteor': self.drawNumericPlot('meteor'),
             'bleu': self.drawNumericPlot('bleu'),
+            'nist': self.drawNumericPlot('nist'),
             'rouge': self.drawRougePlot,
             'pyrouge': self.drawPyRougePlot
         }
@@ -567,7 +569,7 @@ class plotFormatter:
         plt.savefig(
             "../figs/" +
             title.upper() +
-            "_bar_"+
+            "_bar_" +
             str(datetime.now()) +
             '.pdf',
             format='pdf',
@@ -606,7 +608,7 @@ class plotFormatter:
         count = 0
         for summarizer in systemsCorpusFormat:
             values = systemsCorpusFormat[summarizer]
-            reformValues = [float(elem[scoreTarget]) * 100 for elem in values]
+            reformValues = [float(elem[scoreTarget]) for elem in values]
             ax.barh(
                 indexes + (barWidth * count),
                 reformValues,
