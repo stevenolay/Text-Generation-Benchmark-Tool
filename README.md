@@ -40,6 +40,7 @@ Some summarizers require the NLTK tokenizer which has an extra build step:
     >>> import nltk
     >>> nltk.download('stopwords')
     >>> nltk.download('punkt')
+    >>> nltk.download('perluniprops')
 ```
 
 ### <a name="supported_s"></a> Supported Summarizers
