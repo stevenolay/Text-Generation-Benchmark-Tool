@@ -487,7 +487,7 @@ class plotFormatter:
             sns.despine()
 
             plt.savefig(
-                "../figs/illustrator/" +
+                "../figs/" +
                 metricName.upper() +
                 "_bar_" +
                 str(datetime.now()) +
@@ -565,7 +565,7 @@ class plotFormatter:
         fig.subplots_adjust(top=0.85)
         plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
         plt.savefig(
-            "../figs" +
+            "../figs/" +
             title.upper() +
             "_bar_"+
             str(datetime.now()) +
@@ -669,7 +669,7 @@ class plotFormatter:
         fig.subplots_adjust(top=0.85)
         plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
         plt.savefig(
-            "../figs" +
+            "../figs/" +
             targetRouge.upper() +
             "_bar_" +
             str(datetime.now()) +
@@ -730,7 +730,7 @@ class plotFormatter:
         fig.subplots_adjust(top=0.85)
         plt.tight_layout(pad=0.4, w_pad=0.5, h_pad=2.0)
         plt.savefig(
-            "../figs" +
+            "../figs/" +
             'rouge_f_summary' +
             "_bar_" +
             str(datetime.now()) +
