@@ -54,11 +54,20 @@ class SummarizerSwitch(object):
             except Exception as err:
                 # Failed summaries are logged so they can be investigated.
                 LOGGER.error(str(err))
-
-            return summary
+            truncatedSummary = self._truncateSummary(summary)
+            return truncatedSummary
 
         error = '{0}: Is not an available summarizer'.format(summarizerKey)
         raise ValueError(error)
+
+    def _truncateSummary(self, summary):
+        summaryWordTokens = self.tokenizer.word_tokenize(summary)
+        numWords = min(100, len(summaryWordTokens))
+        summaryTokenSubset = summaryWordTokens[0:numWords]
+
+        truncatedSummary = ''.join(summaryTokenSubset)
+
+        return truncatedSummary
 
     def _recollect(self, text):
         benchmark = self.benchmark
