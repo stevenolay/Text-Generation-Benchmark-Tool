@@ -5,7 +5,7 @@
 configparser == 3.5.0
 
 # Summarizer/summarizer_source_files/smmrRE/smmrRE.py: 1,2,12
-nltk == 3.2.5
+nltk == 3.3
 
 # plot.py: 5
 pandas == 0.22.0
