@@ -28,5 +28,6 @@ sumy == 0.7.0
 tqdm == 4.23.4
 
 pyrouge
-
+seaborn
 spacy
+matplotlib
