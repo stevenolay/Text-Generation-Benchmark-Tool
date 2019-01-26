@@ -17,3 +17,12 @@ src/__pycache__/
 .pydevproject
 *.pyc
 *__pycache__
+.log
+allLogs.log
+bin/
+cache/
+env/
+lib/
+pyvenv.cfg
+
+
