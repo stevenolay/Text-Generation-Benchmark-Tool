@@ -46,7 +46,7 @@ class SummarizerSwitch(object):
         functions = self.functionMap
 
         if summarizerKey in functions:
-            summary = None
+            summary = text
             try:
                 method = functions[summarizerKey]
                 # Method should return a summary
