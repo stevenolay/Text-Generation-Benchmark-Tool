@@ -316,6 +316,8 @@ class benchmark:
             .format(corpusFilePath, summarizerKey))
 
         for index, text in tqdm(enumerate(samples), total=fileLength):
+            if index > 1000:
+              break
             generatedSummary = summarizerSwitch.toggleAndExecuteSummarizer(
                 summarizerKey, text)
 
