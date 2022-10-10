@@ -36,7 +36,26 @@ class OrderDUC2004:
                     "tasks1and2/duc2004_tasks1and2_docs/docs"
                 )
             ]
-            docFiles.extractall(members=targetedDocs, path=docsDir)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(docFiles, members=targetedDocs, path=docsDir)
 
         return docsDir
 
@@ -54,7 +73,26 @@ class OrderDUC2004:
                     "duc2004.task1.ROUGE.models.tar.gz")
             ]
 
-            resultsFiles.extractall(members=targetedModels, path=resultsDir)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(resultsFiles, members=targetedModels, path=resultsDir)
 
         resultsTarPath = os.path.join(
             resultsDir,
@@ -66,7 +104,26 @@ class OrderDUC2004:
                 if tarinfo.name.startswith("./eval")
             ]
 
-            resultsDocs.extractall(members=subdirAndFiles, path=resultsDir)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(resultsDocs, members=subdirAndFiles, path=resultsDir)
 
         return resultsDir
 
